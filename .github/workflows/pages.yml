@@ -20,6 +20,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -36,7 +40,8 @@ jobs:
         env:
           GITHUB_PAGES: "true"
           VITE_SUPABASE_URL: https://ciwmebbkstdewbolwdyo.supabase.co
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Public Supabase publishable key for the browser; never put service_role here.
+          VITE_SUPABASE_ANON_KEY: "sb_publishable_PGKlcXgbun9_w3ZXObntow__sBe3I1D"
           VITE_MEDIA_WORKER_URL: https://zandoafrica-media.marketplacezando-zandoafrica23.workers.dev
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
