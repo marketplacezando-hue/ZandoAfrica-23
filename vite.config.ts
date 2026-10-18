@@ -4,6 +4,7 @@ import svgr from "vite-plugin-svgr";
 import path from "path";
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES === "true" ? "/ZandoAfrica-23/" : "/",
   plugins: [
     react(),
     svgr({
