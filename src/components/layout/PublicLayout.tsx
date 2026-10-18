@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { useZando } from '@/contexts/ZandoContext';
+import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { ShieldCheck, Phone, Mail, MapPin, Globe } from 'lucide-react';
 import { PublicHeader } from './PublicHeader';
 
@@ -23,6 +24,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 
 export const PublicFooter: React.FC = () => {
   const { countries, setSelectedCountry } = useZando();
+  const navigate = useNavigate();
 
   return (
     <footer className="bg-[#0a2f24] border-t border-emerald-900/60 mt-12 text-white">
@@ -55,7 +57,12 @@ export const PublicFooter: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-10">
           {/* Brand Info & Mission */}
           <div className="space-y-4 sm:col-span-2 md:col-span-1">
-            <Link to="/" className="inline-block">
+            <Link
+              to="/"
+              onClick={event => handleZandoLogoClick(event, navigate)}
+              aria-label="Zando Africa — Retour à l'accueil"
+              className="inline-block"
+            >
               <img
                 src={BRAND_ASSETS.logoUrl}
                 alt="Zando Africa"
@@ -135,8 +142,6 @@ export const PublicFooter: React.FC = () => {
             <Link to="/a-propos" className="hover:text-white hover:underline transition-colors">Confidentialité</Link>
             <span>•</span>
             <Link to="/a-propos" className="hover:text-white hover:underline transition-colors">Contact</Link>
-            <span>•</span>
-            <Link to="/admin/login" className="hover:text-white hover:underline transition-colors text-emerald-400 font-semibold">Portail Admin</Link>
           </div>
         </div>
       </div>

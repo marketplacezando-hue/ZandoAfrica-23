@@ -33,10 +33,10 @@ export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [togglingMode, setTogglingMode] = useState(false);
 
-  // If not authenticated, redirect to /admin/login
+  // The public login form is intentionally hidden behind the logo gesture.
   React.useEffect(() => {
     if (!isAdminAuthenticated) {
-      navigate('/admin/login', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isAdminAuthenticated, navigate]);
 
@@ -72,7 +72,7 @@ export const AdminLayout: React.FC = () => {
   const handleLogout = () => {
     logoutAdmin();
     toast.info('Déconnexion effectuée.');
-    navigate('/admin/login');
+    navigate('/');
   };
 
   return (

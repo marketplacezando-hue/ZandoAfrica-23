@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { BRAND_ASSETS } from '@/constants/brand';
+import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import {
   Menu,
   X,
@@ -43,8 +44,7 @@ export const PublicHeader: React.FC = () => {
     selectedCurrency,
     setSelectedCurrency,
     favorites,
-    loginAdmin,
-    isAdminAuthenticated
+    loginAdmin
   } = useZando();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -56,10 +56,14 @@ export const PublicHeader: React.FC = () => {
   const navigate = useNavigate();
   const currencies = ['XAF', 'CDF', 'XOF'];
 
-  // Single-click logo redirection to home (Requirement 4)
-  const handleLogoClick = () => {
-    navigate('/');
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  React.useEffect(() => {
+    const showAdminLogin = () => setAdminModalOpen(true);
+    window.addEventListener(ADMIN_LOGIN_GESTURE_EVENT, showAdminLogin);
+    return () => window.removeEventListener(ADMIN_LOGIN_GESTURE_EVENT, showAdminLogin);
+  }, []);
+
+  const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    handleZandoLogoClick(event, navigate);
   };
 
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
@@ -93,7 +97,7 @@ export const PublicHeader: React.FC = () => {
       <header className="sticky top-0 z-40 w-full border-b bg-card/95 backdrop-blur shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Brand Logo with single-click return to home (Requirement 4) */}
+          {/* Le logo revient à l'accueil; quatre clics successifs ouvrent la connexion admin. */}
           <Link
             to="/"
             onClick={handleLogoClick}
@@ -178,7 +182,17 @@ export const PublicHeader: React.FC = () => {
                 <div>
                   <SheetHeader className="p-4 border-b text-left">
                     <div className="flex items-center justify-between">
-                      <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-8 object-contain" />
+                      <Link
+                        to="/"
+                        onClick={event => {
+                          setMobileMenuOpen(false);
+                          handleLogoClick(event);
+                        }}
+                        aria-label="Zando Africa — Retour à l'accueil"
+                        className="inline-flex"
+                      >
+                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-8 object-contain" />
+                      </Link>
                       <button
                         type="button"
                         onClick={() => setMobileMenuOpen(false)}
@@ -263,21 +277,10 @@ export const PublicHeader: React.FC = () => {
                   </nav>
                 </div>
 
-                <div className="p-4 border-t bg-muted/30 text-center space-y-2">
+                <div className="p-4 border-t bg-muted/30 text-center">
                   <div className="text-xs text-muted-foreground font-medium">
                     Zando Africa • Marketplace panafricaine
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setAdminModalOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    <Lock className="w-3 h-3 text-muted-foreground" />
-                    <span>Accès Administrateur</span>
-                  </button>
                 </div>
               </SheetContent>
             </Sheet>
@@ -285,7 +288,7 @@ export const PublicHeader: React.FC = () => {
         </div>
       </header>
 
-      {/* Secret Admin Authentication Modal (Requirements 2 & 6: Logo visible, stays open until X clicked, Fermer button removed) */}
+      {/* La connexion admin n'apparaît qu'après le geste secret sur le logo. */}
       <Dialog open={adminModalOpen} onOpenChange={setAdminModalOpen}>
         <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-md p-6 bg-card border border-border shadow-2xl rounded-2xl">
           <DialogHeader className="text-center space-y-2 relative">

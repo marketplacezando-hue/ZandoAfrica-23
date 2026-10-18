@@ -17,7 +17,6 @@ import { FavoritesPage } from '@/pages/FavoritesPage';
 import { AboutPage } from '@/pages/AboutPage';
 
 // Admin
-import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { AdminProducts } from '@/pages/admin/AdminProducts';
@@ -49,9 +48,6 @@ const App: React.FC = () => {
               <Route path="/verifier-code" element={<PublicLayout><VerifyCodePage /></PublicLayout>} />
               <Route path="/favoris" element={<PublicLayout><FavoritesPage /></PublicLayout>} />
               <Route path="/a-propos" element={<PublicLayout><AboutPage /></PublicLayout>} />
-
-              {/* Admin Portal Authentication */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
 
               {/* Admin Portal Nested Routes */}
               <Route path="/admin" element={<AdminLayout />}>

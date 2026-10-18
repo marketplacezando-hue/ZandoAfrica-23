@@ -14,7 +14,6 @@ import { AboutPage } from './pages/AboutPage';
 
 // Admin Layout & Pages
 import { AdminLayout } from './components/admin/AdminLayout';
-import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminReviews } from './pages/admin/AdminReviews';
@@ -87,12 +86,6 @@ export const routes: RouteConfig[] = [
   },
 
   // Admin Portal
-  {
-    name: 'Connexion Administration',
-    path: '/admin/login',
-    element: <AdminLoginPage />,
-    public: true,
-  },
   {
     name: 'Tableau de bord Admin',
     path: '/admin',

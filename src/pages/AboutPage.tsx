@@ -1,17 +1,28 @@
 import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
+import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { ShieldCheck, Globe, Zap, Users, MessageCircle, Phone } from 'lucide-react';
 
 export const AboutPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-10">
       {/* Hero header */}
       <div className="text-center space-y-3">
-        <img
-          src={BRAND_ASSETS.logoUrl}
-          alt="Zando Africa"
-          className="h-14 mx-auto object-contain"
-        />
+        <Link
+          to="/"
+          onClick={event => handleZandoLogoClick(event, navigate)}
+          aria-label="Zando Africa — Retour à l'accueil"
+          className="inline-block"
+        >
+          <img
+            src={BRAND_ASSETS.logoUrl}
+            alt="Zando Africa"
+            className="h-14 mx-auto object-contain"
+          />
+        </Link>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground">
           À propos de Zando Africa
         </h1>
