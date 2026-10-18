@@ -181,11 +181,11 @@ export const PublicHeader: React.FC = () => {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                style={{ width: 'min(100vw, 460px)', maxWidth: 460 }}
-                className="flex h-full flex-col gap-0 overflow-hidden border-l border-emerald-100/80 bg-[#fcfdfd] p-0 text-slate-900 shadow-2xl [&>button:first-of-type]:right-4 [&>button:first-of-type]:top-4 [&>button:first-of-type]:z-30 [&>button:first-of-type]:flex [&>button:first-of-type]:h-10 [&>button:first-of-type]:w-10 [&>button:first-of-type]:items-center [&>button:first-of-type]:justify-center [&>button:first-of-type]:rounded-full [&>button:first-of-type]:border-2 [&>button:first-of-type]:border-emerald-600 [&>button:first-of-type]:bg-white [&>button:first-of-type]:p-0 [&>button:first-of-type]:opacity-100 [&>button:first-of-type]:text-slate-700 [&>button:first-of-type]:shadow-sm [&>button:first-of-type>svg]:h-5 [&>button:first-of-type>svg]:w-5"
+                style={{ width: 'min(80vw, 680px)', maxWidth: 680 }}
+                className="flex h-full flex-col gap-0 overflow-hidden border-l border-emerald-100/80 bg-[#fcfdfd] p-0 text-slate-900 shadow-2xl [&>button:first-of-type]:right-4 [&>button:first-of-type]:top-4 [&>button:first-of-type]:z-30 [&>button:first-of-type]:flex [&>button:first-of-type]:h-9 [&>button:first-of-type]:w-9 [&>button:first-of-type]:items-center [&>button:first-of-type]:justify-center [&>button:first-of-type]:rounded-full [&>button:first-of-type]:border [&>button:first-of-type]:border-emerald-600 [&>button:first-of-type]:bg-white [&>button:first-of-type]:p-0 [&>button:first-of-type]:opacity-100 [&>button:first-of-type]:text-slate-900 [&>button:first-of-type]:shadow-sm [&>button:first-of-type>svg]:h-4 [&>button:first-of-type>svg]:w-4"
               >
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-                  <SheetHeader className="shrink-0 gap-0 border-b border-slate-200 px-5 pb-4 pt-5 text-left sm:px-6 sm:pt-6">
+                  <SheetHeader className="shrink-0 gap-0 border-b-0 px-4 pb-1 pt-4 text-left sm:px-5 sm:pt-5">
                     <div className="flex items-start">
                       <Link
                         to="/"
@@ -196,50 +196,50 @@ export const PublicHeader: React.FC = () => {
                         aria-label="Zando Africa — Retour à l'accueil"
                         className="inline-flex min-w-0 max-w-[calc(100%-4rem)] flex-1"
                       >
-                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-12 max-w-full object-contain sm:h-14" />
+                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-10 max-w-full object-contain sm:h-12 lg:h-14" />
                       </Link>
                     </div>
-                    <SheetTitle className="mt-3 flex min-w-0 items-center gap-2 text-sm font-medium text-slate-500 sm:mt-4 sm:text-[15px]">
-                      <span aria-hidden="true" className="h-5 w-1 shrink-0 rounded-full bg-emerald-600" />
+                    <SheetTitle className="mt-3 flex min-w-0 items-center gap-2.5 text-[13px] font-medium text-slate-600 sm:mt-4 sm:text-sm lg:text-base">
+                      <span aria-hidden="true" className="h-6 w-1 shrink-0 rounded-full bg-emerald-600" />
                       <span className="min-w-0 break-words">Menu de navigation Zando Africa</span>
                     </SheetTitle>
                   </SheetHeader>
 
-                  <nav aria-label="Menu de navigation" className="space-y-1 px-4 pb-4 pt-3 sm:space-y-1.5 sm:px-5 sm:pt-4">
+                  <nav aria-label="Menu de navigation" className="space-y-2 px-3 pb-3 pt-3 sm:space-y-2.5 sm:px-4 sm:pb-4 sm:pt-4 lg:space-y-2.5 lg:px-5 lg:pb-3 lg:pt-3">
                     <Link
                       to="/publier"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-amber-200 bg-[#fffaf1] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-amber-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-emerald-600">
-                        <ShoppingBag className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                        <ShoppingBag className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">1. Publier un produit</span>
+                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">1. Publier un produit</span>
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
 
                     <Link
                       to="/passer-pub"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-blue-200 bg-[#f4f9ff] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-blue-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-amber-500">
-                        <Megaphone className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                        <Megaphone className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">2. Passer une PUB VIP</span>
+                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">2. Passer une PUB VIP</span>
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
 
                     <Link
                       to="/favoris"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-rose-200 bg-[#fff5f7] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-rose-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
                       <span className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-rose-500">
-                          <Heart className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-pink-400 to-rose-600 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                          <Heart className="h-4 w-4 fill-white/15 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                         </span>
-                        <span className="min-w-0 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">3. Mes Favoris</span>
+                        <span className="min-w-0 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">3. Mes Favoris</span>
                       </span>
                       {favorites.length > 0 && (
                         <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold tabular-nums text-white shadow-sm">
@@ -252,47 +252,47 @@ export const PublicHeader: React.FC = () => {
                     <Link
                       to="/abonnement"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-emerald-200 bg-[#f1fbf6] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-emerald-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-blue-600">
-                        <CreditCard className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-400 to-emerald-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                        <CreditCard className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">4. Abonnement Vendeur</span>
+                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">4. Abonnement Vendeur</span>
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
 
                     <Link
                       to="/verifier-code"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-violet-200 bg-[#f8f5ff] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-violet-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-teal-600">
-                        <KeyRound className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-purple-400 to-violet-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                        <KeyRound className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">5. Vérifier mon Code Promo</span>
+                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">5. Vérifier mon Code Promo</span>
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
 
                     <Link
                       to="/a-propos"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group mt-2 flex min-h-[56px] items-center gap-3 rounded-xl border-t border-slate-200 px-3 py-3.5 pt-5 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-[62px] sm:gap-4 sm:px-4 sm:py-3"
+                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-teal-200 bg-[#f0fbf9] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-teal-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-emerald-600">
-                        <Info className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-teal-400 to-teal-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                        <Info className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-base font-medium leading-snug text-slate-900 sm:text-[17px]">6. À propos &amp; Sécurité</span>
+                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">6. À propos &amp; Sécurité</span>
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
                   </nav>
                 </div>
 
-                <div className="relative isolate shrink-0 overflow-hidden border-t border-slate-200 bg-white px-4 pb-7 pt-3 sm:px-5 sm:pt-4">
-                  <div className="relative z-10 mx-auto flex max-w-full items-center justify-center gap-2 text-center text-xs font-medium text-slate-500 sm:text-[13px]">
-                    <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-600 sm:h-[18px] sm:w-[18px]" />
+                <div className="relative isolate shrink-0 overflow-hidden border-t border-emerald-100 bg-white px-4 pb-10 pt-3 sm:px-5 sm:pt-4">
+                  <div className="relative z-10 mx-auto flex max-w-full items-center justify-center gap-2 text-center text-[11px] font-medium text-slate-600 sm:text-xs">
+                    <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-600 sm:h-5 sm:w-5" />
                     <span className="min-w-0 break-words">Zando Africa <span className="px-1">•</span> Marketplace panafricaine</span>
                   </div>
-                  <svg aria-hidden="true" viewBox="0 0 800 60" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-2 w-full opacity-60">
+                  <svg aria-hidden="true" viewBox="0 0 800 60" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 w-full">
                     <path d="M0 0 C145 18 235 48 390 42 C555 35 660 13 800 0 V60 H0 Z" fill="#F59E0B" />
                     <path d="M0 16 C150 38 250 58 400 48 C565 38 690 24 800 11 V60 H0 Z" fill="#16A34A" />
                   </svg>
