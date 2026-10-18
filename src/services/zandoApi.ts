@@ -1,0 +1,635 @@
+import { supabase } from '@/db/supabase';
+import type {
+  Country,
+  Category,
+  Product,
+  BannerAd,
+  SellerSubscription,
+  PromoCode,
+  Transaction,
+  WithdrawalRequest,
+  TrafficEvent,
+  AdminAuditLog,
+  PlatformSettings,
+  ProductReview
+} from '@/types/zando';
+
+function getVisitorId(): string {
+  const storageKey = 'zando_visitor_id';
+  try {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) return stored;
+    const visitorId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `visitor-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    localStorage.setItem(storageKey, visitorId);
+    return visitorId;
+  } catch {
+    return `visitor-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+  }
+}
+
+export const zandoApi = {
+  // Countries
+  async getCountries(): Promise<Country[]> {
+    const { data, error } = await supabase
+      .from('countries')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (error) {
+      console.error('Error fetching countries:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  // Platform Settings
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const { data, error } = await supabase
+      .from('platform_settings')
+      .select('*');
+    if (error) {
+      console.error('Error fetching platform settings:', error);
+    }
+    
+    const settingsMap: Record<string, unknown> = {};
+    data?.forEach(item => {
+      settingsMap[item.key] = item.value;
+    });
+
+    return {
+      site_mode: (settingsMap.site_mode as { mode: 'free' | 'paid' }) || { mode: 'paid' },
+      theme: (settingsMap.theme as PlatformSettings['theme']) || {
+        primary_color: '#00A651',
+        secondary_color: '#FF8A00',
+        button_color: '#2563EB',
+        sidebar_color: '#092C22',
+        card_style: 'rounded-xl'
+      },
+      pricing_durations: (settingsMap.pricing_durations as PlatformSettings['pricing_durations']) || [
+        { days: 7, price: 250, currency: 'FCFA', label: '7 jours (250 FCFA)' },
+        { days: 14, price: 500, currency: 'FCFA', label: '14 jours / 1 mois (500 FCFA)' },
+        { days: 30, price: 1000, currency: 'FCFA', label: '30 jours / 2 mois (1 000 FCFA)' }
+      ],
+      subscription_plans: (settingsMap.subscription_plans as PlatformSettings['subscription_plans']) || [
+        { months: 1, price: 15000, currency: 'FCFA', limit: 30, name: 'Formule Starter (1 Mois)' },
+        { months: 2, price: 28000, currency: 'FCFA', limit: 70, name: 'Formule Pro (2 Mois)' },
+        { months: 3, price: 40000, currency: 'FCFA', limit: 120, name: 'Formule VIP (3 Mois)' }
+      ],
+      ad_pricing: (settingsMap.ad_pricing as PlatformSettings['ad_pricing']) || [
+        { months: 1, price: 30000, currency: 'FCFA', name: 'Bannière VIP 1 Mois' },
+        { months: 2, price: 55000, currency: 'FCFA', name: 'Bannière VIP 2 Mois' },
+        { months: 3, price: 75000, currency: 'FCFA', name: 'Bannière VIP 3 Mois' }
+      ]
+    };
+  },
+
+  async updatePlatformSetting(key: string, value: unknown): Promise<boolean> {
+    const { error } = await supabase
+      .from('platform_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() });
+    if (error) {
+      console.error(`Error updating setting ${key}:`, error);
+      return false;
+    }
+    return true;
+  },
+
+  // Products
+  async getProducts(params?: {
+    countryId?: string;
+    categoryId?: string;
+    search?: string;
+    isPopular?: boolean;
+    status?: string;
+    limit?: number;
+  }): Promise<Product[]> {
+    let query = supabase
+      .from('products')
+      .select('*, countries(*), categories(*)')
+      .order('created_at', { ascending: false });
+
+    if (params?.status) {
+      query = query.eq('status', params.status);
+    } else {
+      query = query.eq('status', 'published');
+    }
+
+    if (params?.countryId && params.countryId !== 'ALL') {
+      query = query.eq('country_id', params.countryId);
+    }
+
+    if (params?.categoryId && params.categoryId !== 'all') {
+      query = query.eq('category_id', params.categoryId);
+    }
+
+    if (params?.isPopular) {
+      query = query.eq('is_popular', true);
+    }
+
+    if (params?.search) {
+      query = query.or(`title.ilike.%${params.search}%,description.ilike.%${params.search}%,city.ilike.%${params.search}%`);
+    }
+
+    if (params?.limit) {
+      query = query.limit(params.limit);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  /**
+   * Présente 75% de produits locaux et 25% de produits de l'étranger (Exigence Utilisateur)
+   */
+  async getMixedProducts(params?: {
+    countryId?: string;
+    categoryId?: string;
+    search?: string;
+    limit?: number;
+  }): Promise<{ products: Product[]; popular: Product[] }> {
+    const allProducts = await this.getProducts({
+      categoryId: params?.categoryId,
+      search: params?.search,
+      status: 'published'
+    });
+
+    const targetCountryId = params?.countryId && params.countryId !== 'ALL' ? params.countryId : null;
+
+    if (!targetCountryId) {
+      return {
+        products: allProducts,
+        popular: allProducts.filter(p => p.is_popular).slice(0, 8)
+      };
+    }
+
+    const localProducts = allProducts.filter(p => p.country_id === targetCountryId);
+    const foreignProducts = allProducts.filter(p => p.country_id !== targetCountryId);
+
+    // Distribution 75% locaux / 25% étrangers (ratio 3 locaux pour 1 étranger)
+    const mixedList: Product[] = [];
+    let localIdx = 0;
+    let foreignIdx = 0;
+    const totalToTake = params?.limit || Math.max(allProducts.length, 24);
+
+    while ((localIdx < localProducts.length || foreignIdx < foreignProducts.length) && mixedList.length < totalToTake) {
+      for (let i = 0; i < 3 && localIdx < localProducts.length; i++) {
+        mixedList.push(localProducts[localIdx++]);
+      }
+      if (foreignIdx < foreignProducts.length) {
+        mixedList.push(foreignProducts[foreignIdx++]);
+      } else if (localIdx >= localProducts.length) {
+        break;
+      }
+    }
+
+    while (localIdx < localProducts.length && mixedList.length < totalToTake) {
+      mixedList.push(localProducts[localIdx++]);
+    }
+    while (foreignIdx < foreignProducts.length && mixedList.length < totalToTake) {
+      mixedList.push(foreignProducts[foreignIdx++]);
+    }
+
+    // Répartition 75/25 pour les produits populaires
+    const localPopular = localProducts.filter(p => p.is_popular);
+    const foreignPopular = foreignProducts.filter(p => p.is_popular);
+    const mixedPopular: Product[] = [];
+    let pLocalIdx = 0;
+    let pForeignIdx = 0;
+
+    while ((pLocalIdx < localPopular.length || pForeignIdx < foreignPopular.length) && mixedPopular.length < 8) {
+      for (let i = 0; i < 3 && pLocalIdx < localPopular.length && mixedPopular.length < 8; i++) {
+        mixedPopular.push(localPopular[pLocalIdx++]);
+      }
+      if (pForeignIdx < foreignPopular.length && mixedPopular.length < 8) {
+        mixedPopular.push(foreignPopular[pForeignIdx++]);
+      } else if (pLocalIdx >= localPopular.length) {
+        break;
+      }
+    }
+    while (pLocalIdx < localPopular.length && mixedPopular.length < 8) {
+      mixedPopular.push(localPopular[pLocalIdx++]);
+    }
+    while (pForeignIdx < foreignPopular.length && mixedPopular.length < 8) {
+      mixedPopular.push(foreignPopular[pForeignIdx++]);
+    }
+
+    return {
+      products: mixedList.length > 0 ? mixedList : allProducts,
+      popular: mixedPopular.length > 0 ? mixedPopular : allProducts.filter(p => p.is_popular).slice(0, 8)
+    };
+  },
+
+  async getProductById(id: string): Promise<Product | null> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, countries(*), categories(*)')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching product by id:', error);
+      return null;
+    }
+    return data;
+  },
+
+  async incrementProductViews(id: string, visitorId?: string): Promise<{ incremented: boolean; views_count: number }> {
+    try {
+      const visitor = visitorId || getVisitorId();
+      const { data, error } = await supabase.rpc('increment_product_views_by_visitor', {
+        p_product_id: id,
+        p_visitor_id: visitor
+      });
+
+      if (!error && data) {
+        return data as { incremented: boolean; views_count: number };
+      }
+    } catch (err) {
+      console.warn('Erreur increment_product_views_by_visitor:', err);
+    }
+    return { incremented: false, views_count: 0 };
+  },
+
+  async incrementCallClicks(id: string): Promise<void> {
+    await supabase.rpc('increment_product_contact', { p_product_id: id, p_kind: 'call' });
+  },
+
+  async incrementWhatsAppClicks(id: string): Promise<void> {
+    await supabase.rpc('increment_product_contact', { p_product_id: id, p_kind: 'whatsapp' });
+  },
+
+  async createProduct(product: Partial<Product>): Promise<{ success: boolean; data?: { id: string; status: Product['status'] }; error?: string }> {
+    const { data, error } = await supabase.rpc('submit_product', { p_product: product });
+
+    if (error) {
+      console.error('Error creating product:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  },
+
+  async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
+    const { error } = await supabase
+      .from('products')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating product:', error);
+      return false;
+    }
+    return true;
+  },
+
+  async softDeleteProduct(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('products')
+      .update({ status: 'trashed', deleted_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error trashing product:', error);
+      return false;
+    }
+    return true;
+  },
+
+  async restoreProduct(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('products')
+      .update({ status: 'published', deleted_at: null })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error restoring product:', error);
+      return false;
+    }
+    return true;
+  },
+
+  async deleteProductPermanently(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error permanently deleting product:', error);
+      return false;
+    }
+    return true;
+  },
+
+  // Banner Ads
+  async getBannerAds(status = 'active'): Promise<BannerAd[]> {
+    let query = supabase.from('banner_ads').select('*');
+    if (status) {
+      query = query.eq('status', status);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching banner ads:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async createBannerAd(ad: Partial<BannerAd>): Promise<{ success: boolean; data?: BannerAd; error?: string }> {
+    const { data, error } = await supabase.rpc('submit_banner_ad', { p_ad: ad });
+
+    if (error) {
+      console.error('Error creating banner ad:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data: data as BannerAd };
+  },
+
+  async incrementBannerClicks(id: string): Promise<void> {
+    await supabase.rpc('increment_banner_click', { p_banner_id: id });
+  },
+
+  async updateBannerAd(id: string, updates: Partial<BannerAd>): Promise<boolean> {
+    const { error } = await supabase
+      .from('banner_ads')
+      .update(updates)
+      .eq('id', id);
+    return !error;
+  },
+
+  // Subscriptions
+  async getSubscriptions(): Promise<SellerSubscription[]> {
+    const { data, error } = await supabase
+      .from('seller_subscriptions')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching subscriptions:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async createSubscription(sub: Partial<SellerSubscription>): Promise<{ success: boolean; data?: SellerSubscription; error?: string }> {
+    const { data, error } = await supabase.rpc('submit_seller_subscription', { p_sub: sub });
+
+    if (error) {
+      console.error('Error creating subscription:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data: data as SellerSubscription };
+  },
+
+  async updateSubscription(id: string, updates: Partial<SellerSubscription>): Promise<boolean> {
+    const { error } = await supabase
+      .from('seller_subscriptions')
+      .update(updates)
+      .eq('id', id);
+    return !error;
+  },
+
+  // Promo Codes
+  async getPromoCodes(): Promise<PromoCode[]> {
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching promo codes:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async verifyPromoCode(code: string, phone: string): Promise<{
+    valid: boolean;
+    reason?: string;
+    promoCode?: { expires_at: string | null; uses_count: number; max_uses: number };
+  }> {
+    const { data, error } = await supabase.rpc('verify_promo_code', {
+      p_code: code.trim(),
+      p_phone: phone.trim()
+    });
+    if (error || !data) return { valid: false, reason: 'Code invalide ou non applicable à ce numéro.' };
+    return data as { valid: boolean; reason?: string; promoCode?: { expires_at: string | null; uses_count: number; max_uses: number } };
+  },
+
+  async createPromoCode(promo: Partial<PromoCode>): Promise<{ success: boolean; data?: PromoCode; error?: string }> {
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .insert([promo])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating promo code:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  },
+
+  async updatePromoCode(id: string, updates: Partial<PromoCode>): Promise<boolean> {
+    const { error } = await supabase
+      .from('promo_codes')
+      .update(updates)
+      .eq('id', id);
+    return !error;
+  },
+
+  // Transactions
+  async getTransactions(): Promise<Transaction[]> {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async createTransaction(tx: Partial<Transaction>): Promise<{ success: boolean; data?: Transaction; error?: string }> {
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([tx])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating transaction:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  },
+
+  // Withdrawals
+  async getWithdrawals(): Promise<WithdrawalRequest[]> {
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching withdrawals:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async createWithdrawal(w: Partial<WithdrawalRequest>): Promise<{ success: boolean; data?: WithdrawalRequest; error?: string }> {
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .insert([w])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating withdrawal request:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  },
+
+  // Traffic & Analytics
+  async trackEvent(event: {
+    event_type: string;
+    item_id?: string;
+    page_path?: string;
+    country_code?: string;
+    city?: string;
+    device_type?: string;
+  }): Promise<void> {
+    await supabase.from('traffic_events').insert([
+      {
+        ...event,
+        device_type: window.innerWidth < 768 ? 'mobile' : 'desktop'
+      }
+    ]);
+  },
+
+  async getTrafficEvents(limit = 200): Promise<TrafficEvent[]> {
+    const { data, error } = await supabase
+      .from('traffic_events')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error('Error fetching traffic events:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  // Audit Logs
+  async getAuditLogs(limit = 100): Promise<AdminAuditLog[]> {
+    const { data, error } = await supabase
+      .from('admin_audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error('Error fetching audit logs:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async logAdminAction(adminEmail: string, action: string, entityType: string, entityId?: string, details?: Record<string, unknown>): Promise<void> {
+    void adminEmail;
+    await supabase.rpc('log_admin_action', {
+      p_action: action,
+      p_entity_type: entityType,
+      p_entity_id: entityId ?? null,
+      p_details: details ?? null
+    });
+  },
+
+  // Media Upload via Cloudflare R2 Worker
+  async uploadMedia(file: File, folder = 'products'): Promise<string | null> {
+    try {
+      const workerUrl = import.meta.env.VITE_MEDIA_WORKER_URL;
+      if (!workerUrl) return null;
+      const isImage = file.type.startsWith('image/');
+      const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
+      if ((!isImage && !isVideo) || file.size > (isImage ? 10 : 50) * 1024 * 1024) return null;
+      const response = await fetch(`${workerUrl.replace(/\/$/, '')}/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'X-Media-Folder': folder
+        },
+        body: file
+      });
+      if (!response.ok) throw new Error(`Cloudflare media upload failed (${response.status})`);
+      const result = await response.json() as { url?: string };
+      return result.url || null;
+    } catch (e) {
+      console.error('Upload exception:', e);
+      return null;
+    }
+  },
+
+  // Reviews Management
+  async getProductReviews(productId: string): Promise<ProductReview[]> {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .select('*')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching reviews:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async createProductReview(review: { product_id: string; author_name: string; rating: number; comment: string }): Promise<ProductReview | null> {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .insert([review])
+      .select()
+      .single();
+    if (error) {
+      console.error('Error creating review:', error);
+      return null;
+    }
+    return data;
+  },
+
+  async getAllProductReviews(): Promise<ProductReview[]> {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .select('*, products(title, photos)')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching all reviews:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async deleteProductReview(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('product_reviews')
+      .delete()
+      .eq('id', id);
+    return !error;
+  },
+};

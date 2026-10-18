@@ -1,0 +1,12 @@
+name = "zandoafrica-media"
+main = "media-worker.js"
+compatibility_date = "2026-10-18"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "zandoafrica-media"
+
+[[kv_namespaces]]
+binding = "UPLOAD_RATES"
+id = "c3b79bef6ce64caf89b4a1cda6420be0"
