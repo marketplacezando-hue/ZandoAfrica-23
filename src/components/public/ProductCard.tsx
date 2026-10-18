@@ -5,6 +5,7 @@ import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import { Heart, Clock, Eye, Phone } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
+import { CountryFlag } from '@/components/common/CountryFlag';
 
 interface ProductCardProps {
   product: Product;
@@ -137,7 +138,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="space-y-1">
           {/* Country flag and city */}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-            <span>{product.countries?.flag_emoji || '🌍'}</span>
+            {product.countries?.id ? <CountryFlag countryId={product.countries.id} /> : <span aria-hidden="true">🌍</span>}
             <span className="truncate">
               {product.countries?.name || 'Afrique'} • {product.city}
             </span>

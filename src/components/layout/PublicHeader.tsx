@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogoGesture';
+import { CountryFlag } from '@/components/common/CountryFlag';
 import {
   Menu,
   X,
@@ -120,7 +121,7 @@ export const PublicHeader: React.FC = () => {
                   type="button"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer text-foreground"
                 >
-                  <span className="text-base">{selectedCountry?.flag_emoji || '🌍'}</span>
+                  {selectedCountry ? <CountryFlag countryId={selectedCountry.id} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
                   <span className="hidden sm:inline max-w-[120px] truncate text-foreground">{selectedCountry?.name || 'Pays'}</span>
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -136,7 +137,7 @@ export const PublicHeader: React.FC = () => {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-lg">{c.flag_emoji}</span>
+                      <CountryFlag countryId={c.id} className="h-[18px] w-[27px]" />
                       <span className="text-sm">{c.name}</span>
                     </span>
                     <span className="text-xs text-muted-foreground">{c.currency}</span>

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Country, Category, PlatformSettings } from '@/types/zando';
 import { zandoApi } from '@/services/zandoApi';
 import { supabase } from '@/db/supabase';
+import { applyPlatformTheme } from '@/lib/platformTheme';
 
 interface ZandoContextType {
   countries: Country[];
@@ -44,12 +45,15 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       secondary_color: '#FF8A00',
       button_color: '#2563EB',
       sidebar_color: '#092C22',
-      card_style: 'rounded-xl'
+      card_style: 'rounded-xl',
+      card_color: '#FFFFFF',
+      surface_color: '#F3F6F8',
+      border_color: '#E2E8F0'
     },
     pricing_durations: [
-      { days: 7, price: 250, currency: 'FCFA', label: '7 jours (250 FCFA)' },
-      { days: 14, price: 500, currency: 'FCFA', label: '14 jours / 1 mois (500 FCFA)' },
-      { days: 30, price: 1000, currency: 'FCFA', label: '30 jours / 2 mois (1 000 FCFA)' }
+      { days: 30, price: 1000, currency: 'FCFA', label: '1 mois' },
+      { days: 60, price: 2000, currency: 'FCFA', label: '2 mois' },
+      { days: 90, price: 3000, currency: 'FCFA', label: '3 mois' }
     ],
     subscription_plans: [
       { months: 1, price: 15000, currency: 'FCFA', limit: 30, name: 'Formule Starter (1 Mois)' },
@@ -60,7 +64,9 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       { months: 1, price: 30000, currency: 'FCFA', name: 'Bannière VIP 1 Mois' },
       { months: 2, price: 55000, currency: 'FCFA', name: 'Bannière VIP 2 Mois' },
       { months: 3, price: 75000, currency: 'FCFA', name: 'Bannière VIP 3 Mois' }
-    ]
+    ],
+    about_content: "La plateforme moderne de petites annonces commerciales qui connecte acheteurs et vendeurs à travers toute l'Afrique.",
+    security_content: 'Vérifiez les articles en personne avant tout paiement. Ne transférez jamais d’argent à l’avance à un vendeur que vous ne connaissez pas et signalez toute annonce suspecte.'
   });
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
@@ -105,6 +111,10 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error('Failed to load settings:', e);
     }
   };
+
+  useEffect(() => {
+    applyPlatformTheme(settings.theme);
+  }, [settings.theme]);
 
   useEffect(() => {
     const initData = async () => {

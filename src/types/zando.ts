@@ -170,6 +170,9 @@ export interface PlatformSettings {
     button_color: string;
     sidebar_color: string;
     card_style: string;
+    card_color: string;
+    surface_color: string;
+    border_color: string;
   };
   pricing_durations: Array<{
     days: number;
@@ -190,4 +193,6 @@ export interface PlatformSettings {
     currency: string;
     name: string;
   }>;
+  about_content: string;
+  security_content: string;
 }

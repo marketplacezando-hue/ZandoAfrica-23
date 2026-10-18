@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { useZando } from '@/contexts/ZandoContext';
 import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
+import { CountryFlag } from '@/components/common/CountryFlag';
 import { ShieldCheck, Phone, Mail, MapPin, Globe } from 'lucide-react';
 import { PublicHeader } from './PublicHeader';
 
@@ -44,7 +45,7 @@ export const PublicFooter: React.FC = () => {
                   onClick={() => setSelectedCountry(c)}
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d3b2d] border border-emerald-700/60 hover:border-emerald-400 text-emerald-100 hover:text-white transition-all cursor-pointer text-xs shadow-xs"
                 >
-                  <span>{c.flag_emoji}</span>
+                  <CountryFlag countryId={c.id} />
                   <span className="font-medium">{c.name}</span>
                 </button>
               ))}

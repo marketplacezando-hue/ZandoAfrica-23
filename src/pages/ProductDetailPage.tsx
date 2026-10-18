@@ -30,6 +30,7 @@ import {
   Plus
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
+import { CountryFlag } from '@/components/common/CountryFlag';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -474,7 +475,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
-                  <span className="text-lg">{product.countries?.flag_emoji || '🇨🇬'}</span>
+                  <CountryFlag countryId={product.countries?.id || product.country_id} className="h-[18px] w-[27px]" />
                   <span>{product.countries?.name || 'Congo-Brazzaville'} • {product.city || 'Brazzaville'}</span>
                 </div>
                 {(!selectedCountry || product.country_id === selectedCountry.id) ? (

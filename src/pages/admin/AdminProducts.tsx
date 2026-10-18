@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { CountryFlag } from '@/components/common/CountryFlag';
 
 export const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -157,16 +159,14 @@ export const AdminProducts: React.FC = () => {
           />
         </div>
 
-        <select
+        <CountrySelect
+          countries={countries}
           value={selectedCountry}
-          onChange={e => setSelectedCountry(e.target.value)}
-          className="h-10 px-3 rounded-xl border border-input bg-card text-xs text-foreground focus:outline-none"
-        >
-          <option value="ALL">Tous les pays</option>
-          {countries.map(c => (
-            <option key={c.id} value={c.id}>{c.flag_emoji} {c.name}</option>
-          ))}
-        </select>
+          onValueChange={setSelectedCountry}
+          includeAll
+          className="h-10 rounded-xl bg-card text-xs"
+          aria-label="Filtrer par pays"
+        />
 
         <select
           value={selectedCategory}
@@ -229,7 +229,7 @@ export const AdminProducts: React.FC = () => {
                     {/* Pays / Ville */}
                     <td className="p-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <span>{p.countries?.flag_emoji || '🌍'}</span>
+                        {p.countries?.id ? <CountryFlag countryId={p.countries.id} /> : <span aria-hidden="true">🌍</span>}
                         <span className="font-medium text-foreground">{p.city}</span>
                       </div>
                     </td>

@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { ShieldCheck, Globe, Zap, Users, MessageCircle, Phone } from 'lucide-react';
+import { useZando } from '@/contexts/ZandoContext';
 
 export const AboutPage: React.FC = () => {
   const navigate = useNavigate();
+  const { settings } = useZando();
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-10">
@@ -26,8 +28,8 @@ export const AboutPage: React.FC = () => {
         <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground">
           À propos de Zando Africa
         </h1>
-        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-          La plateforme moderne de petites annonces commerciales qui connecte acheteurs et vendeurs à travers toute l'Afrique.
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto whitespace-pre-line">
+          {settings.about_content}
         </p>
       </div>
 
@@ -58,8 +60,8 @@ export const AboutPage: React.FC = () => {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h3 className="font-bold text-base text-foreground">Modération & Sécurité</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Contrôle rigoureux des annonces, protection contre les fraudes, codes promotionnels certifiés et statistiques réelles sans données artificielles.
+          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+            {settings.security_content}
           </p>
         </div>
       </div>

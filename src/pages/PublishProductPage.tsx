@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { CountrySelect } from '@/components/common/CountrySelect';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -44,8 +45,6 @@ export const PublishProductPage: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [description, setDescription] = useState('');
   const [externalUrl, setExternalUrl] = useState('');
-  const [dimensions, setDimensions] = useState('');
-  const [variantsInput, setVariantsInput] = useState('');
 
   // Step 2: Media & Profil Vendeur
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
@@ -57,7 +56,7 @@ export const PublishProductPage: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Step 3: Billing & Duration & Promo Code
-  const [selectedDurationDays, setSelectedDurationDays] = useState(7);
+  const [selectedDurationDays, setSelectedDurationDays] = useState(30);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
   const [promoErrorMessage, setPromoErrorMessage] = useState('');
@@ -72,13 +71,16 @@ export const PublishProductPage: React.FC = () => {
   }, [countryId, countries]);
 
   // Pricing calculations
-  const durationOptions = settings.pricing_durations || [
-    { days: 7, price: 250, currency: 'FCFA', label: '7 jours (250 FCFA)' },
-    { days: 14, price: 500, currency: 'FCFA', label: '14 jours / 1 mois (500 FCFA)' },
-    { days: 30, price: 1000, currency: 'FCFA', label: '30 jours / 2 mois (1 000 FCFA)' }
+  const defaultDurationOptions = [
+    { days: 30, price: 1000, currency: 'FCFA', label: '1 mois' },
+    { days: 60, price: 2000, currency: 'FCFA', label: '2 mois' },
+    { days: 90, price: 3000, currency: 'FCFA', label: '3 mois' }
   ];
+  const configuredDurationOptions = settings.pricing_durations?.filter(option => [30, 60, 90].includes(option.days)) || [];
+  const durationOptions = configuredDurationOptions.length ? configuredDurationOptions : defaultDurationOptions;
 
   const currentDurationConfig = durationOptions.find(d => d.days === selectedDurationDays) || durationOptions[0];
+  const selectedDurationLabel = currentDurationConfig?.label || `${Math.round(selectedDurationDays / 30)} mois`;
   const isFreeMode = settings.site_mode?.mode === 'free';
   const effectivePrice = isFreeMode || promoCodeValid ? 0 : currentDurationConfig.price;
 
@@ -202,11 +204,8 @@ export const PublishProductPage: React.FC = () => {
   const handleFinalPublish = async () => {
     setSubmitting(true);
     try {
-      const parsedOptions = variantsInput
-        ? variantsInput.split(',').map(s => s.trim()).filter(Boolean)
-        : null;
-
-      // Create product with new fields (Requirements 3 & 4)
+      // Les champs historiques dimensions/options restent en base pour les annonces existantes;
+      // le nouveau formulaire ne les demande plus.
       const res = await zandoApi.createProduct({
         title: title.trim(),
         description: description.trim(),
@@ -221,8 +220,6 @@ export const PublishProductPage: React.FC = () => {
         seller_avatar: sellerPhotoUrl || null,
         external_url: externalUrl.trim() || null,
         merchant_url: externalUrl.trim() || null,
-        dimensions: dimensions.trim() || null,
-        options: parsedOptions,
         photos: photoUrls,
         video_url: videoUrl.trim() || null,
         duration_days: selectedDurationDays,
@@ -365,17 +362,13 @@ export const PublishProductPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground">Pays *</label>
-                <select
+                <CountrySelect
+                  countries={countries}
                   value={countryId}
-                  onChange={e => setCountryId(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {countries.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.flag_emoji} {c.name} ({c.dial_code})
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setCountryId}
+                  aria-label="Pays de l’annonce"
+                  className="w-full h-11 rounded-xl bg-background text-sm"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -430,35 +423,6 @@ export const PublishProductPage: React.FC = () => {
                 rows={3}
                 className="rounded-xl"
               />
-            </div>
-
-            {/* Caractéristiques & Dimensions (Requirement 4) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Dimensions & Caractéristiques détaillées</label>
-                <Input
-                  placeholder="Ex. : 160.7 x 77.6 x 7.85 mm, Poids 240g, etc."
-                  value={dimensions}
-                  onChange={e => setDimensions(e.target.value)}
-                  className="h-11 rounded-xl"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Visible clairement sur la fiche produit (dimensions, format, taille...).
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Options / Variantes disponibles</label>
-                <Input
-                  placeholder="Ex. : 128 Go, 256 Go, 512 Go ou S, M, L, XL"
-                  value={variantsInput}
-                  onChange={e => setVariantsInput(e.target.value)}
-                  className="h-11 rounded-xl"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Séparez les différentes options par des virgules.
-                </p>
-              </div>
             </div>
 
             {/* Lien vers le site marchand (Requirement 3) */}
@@ -681,7 +645,7 @@ export const PublishProductPage: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-foreground">{opt.days} jours</span>
+                        <span className="font-bold text-sm text-foreground">{opt.label || `${Math.round(opt.days / 30)} mois`}</span>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-primary bg-primary text-white' : 'border-muted-foreground'}`}>
                           {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
@@ -744,7 +708,7 @@ export const PublishProductPage: React.FC = () => {
             <div className="p-5 rounded-xl bg-card border border-border space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Durée choisie :</span>
-                <span className="font-bold text-foreground">{selectedDurationDays} jours</span>
+                <span className="font-bold text-foreground">{selectedDurationLabel}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Mode de la plateforme :</span>

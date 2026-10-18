@@ -21,6 +21,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CountryFlag } from '@/components/common/CountryFlag';
 
 export const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -329,7 +330,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="min-w-0">
                     <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">{p.title}</h4>
                     <p className="text-[11px] text-muted-foreground">
-                      {p.seller_name} • {p.city} ({p.countries?.flag_emoji})
+                      {p.seller_name} • {p.city} {p.countries?.id && <CountryFlag countryId={p.countries.id} className="ml-1 align-middle" />}
                     </p>
                   </div>
                 </div>
