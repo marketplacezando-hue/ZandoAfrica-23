@@ -6,6 +6,7 @@ import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogo
 import { CountryFlag } from '@/components/common/CountryFlag';
 import {
   Menu,
+  X,
   ShoppingBag,
   Megaphone,
   CreditCard,
@@ -14,7 +15,6 @@ import {
   Info,
   ShieldCheck,
   ChevronDown,
-  ChevronRight,
   Lock,
   Mail,
   Flame
@@ -173,20 +173,16 @@ export const PublicHeader: React.FC = () => {
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-700 bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 dark:text-emerald-200 text-[11px] sm:text-xs font-bold cursor-pointer transition-all shadow-xs active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-emerald-700 bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-extrabold cursor-pointer transition-all shadow-xs active:scale-95"
                 >
-                  <Menu className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
+                  <Menu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span className="hidden sm:inline">Menu</span>
                 </button>
               </SheetTrigger>
-              <SheetContent
-                side="right"
-                style={{ width: 'min(80vw, 680px)', maxWidth: 680 }}
-                className="flex h-full flex-col gap-0 overflow-hidden border-l border-emerald-100/80 bg-[#fcfdfd] p-0 text-slate-900 shadow-2xl [&>button:first-of-type]:right-4 [&>button:first-of-type]:top-4 [&>button:first-of-type]:z-30 [&>button:first-of-type]:flex [&>button:first-of-type]:h-9 [&>button:first-of-type]:w-9 [&>button:first-of-type]:items-center [&>button:first-of-type]:justify-center [&>button:first-of-type]:rounded-full [&>button:first-of-type]:border [&>button:first-of-type]:border-emerald-600 [&>button:first-of-type]:bg-white [&>button:first-of-type]:p-0 [&>button:first-of-type]:opacity-100 [&>button:first-of-type]:text-slate-900 [&>button:first-of-type]:shadow-sm [&>button:first-of-type>svg]:h-4 [&>button:first-of-type>svg]:w-4"
-              >
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-                  <SheetHeader className="shrink-0 gap-0 border-b-0 px-4 pb-1 pt-4 text-left sm:px-5 sm:pt-5">
-                    <div className="flex items-start">
+              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between">
+                <div>
+                  <SheetHeader className="p-4 border-b text-left">
+                    <div className="flex items-center justify-between">
                       <Link
                         to="/"
                         onClick={event => {
@@ -194,108 +190,98 @@ export const PublicHeader: React.FC = () => {
                           handleLogoClick(event);
                         }}
                         aria-label="Zando Africa — Retour à l'accueil"
-                        className="inline-flex min-w-0 max-w-[calc(100%-4rem)] flex-1"
+                        className="inline-flex"
                       >
-                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-10 max-w-full object-contain sm:h-12 lg:h-14" />
+                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-8 object-contain" />
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-1 rounded-md text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
-                    <SheetTitle className="mt-3 flex min-w-0 items-center gap-2.5 text-[13px] font-medium text-slate-600 sm:mt-4 sm:text-sm lg:text-base">
-                      <span aria-hidden="true" className="h-6 w-1 shrink-0 rounded-full bg-emerald-600" />
-                      <span className="min-w-0 break-words">Menu de navigation Zando Africa</span>
+                    <SheetTitle className="text-xs text-muted-foreground font-normal mt-1">
+                      Menu de navigation Zando Africa
                     </SheetTitle>
                   </SheetHeader>
 
-                  <nav aria-label="Menu de navigation" className="space-y-2 px-3 pb-3 pt-3 sm:space-y-2.5 sm:px-4 sm:pb-4 sm:pt-4 lg:space-y-2.5 lg:px-5 lg:pb-3 lg:pt-3">
+                  {/* Framed Menu Items with DEEP, PRONOUNCED, HIGH-CONTRAST COLORS (Requirement 4 & 1) */}
+                  <nav className="p-4 space-y-3">
+                    {/* Item 1: Publier */}
                     <Link
                       to="/publier"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-amber-200 bg-[#fffaf1] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-amber-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-amber-600 bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 dark:text-amber-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                        <ShoppingBag className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">1. Publier un produit</span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
+                      <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0" />
+                      <span>1. Publier un produit</span>
                     </Link>
 
+                    {/* Item 2: PUB VIP */}
                     <Link
                       to="/passer-pub"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-blue-200 bg-[#f4f9ff] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-blue-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-blue-600 bg-blue-500/10 hover:bg-blue-500/20 text-blue-950 dark:text-blue-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                        <Megaphone className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">2. Passer une PUB VIP</span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
+                      <Megaphone className="w-5 h-5 text-blue-600 shrink-0" />
+                      <span>2. Passer une PUB VIP</span>
                     </Link>
 
+                    {/* Item 3: Favoris - Accessible UNIQUEMENT depuis le menu (Requirement 1 & 4) */}
                     <Link
                       to="/favoris"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-rose-200 bg-[#fff5f7] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-rose-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center justify-between p-3 rounded-xl border-2 border-rose-600 bg-rose-500/10 hover:bg-rose-500/20 text-rose-950 dark:text-rose-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-pink-400 to-rose-600 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                          <Heart className="h-4 w-4 fill-white/15 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                        </span>
-                        <span className="min-w-0 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">3. Mes Favoris</span>
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <Heart className="w-5 h-5 text-rose-600 fill-rose-600/30 shrink-0" />
+                        <span>3. Mes Favoris</span>
+                      </div>
                       {favorites.length > 0 && (
-                        <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold tabular-nums text-white shadow-sm">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-rose-600 text-white">
                           {favorites.length}
                         </span>
                       )}
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
                     </Link>
 
+                    {/* Item 4: Abonnement vendeur */}
                     <Link
                       to="/abonnement"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-emerald-200 bg-[#f1fbf6] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-emerald-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-emerald-700 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-950 dark:text-emerald-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-400 to-emerald-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                        <CreditCard className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">4. Abonnement Vendeur</span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
+                      <CreditCard className="w-5 h-5 text-emerald-700 shrink-0" />
+                      <span>4. Abonnement Vendeur</span>
                     </Link>
 
+                    {/* Item 5: Code Promo */}
                     <Link
                       to="/verifier-code"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-violet-200 bg-[#f8f5ff] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-violet-600 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-purple-600 bg-purple-500/10 hover:bg-purple-500/20 text-purple-950 dark:text-purple-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-purple-400 to-violet-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                        <KeyRound className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">5. Vérifier mon Code Promo</span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
+                      <KeyRound className="w-5 h-5 text-purple-600 shrink-0" />
+                      <span>5. Vérifier mon Code Promo</span>
                     </Link>
 
+                    {/* Item 6: A propos */}
                     <Link
                       to="/a-propos"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group relative flex min-h-[56px] items-center gap-2.5 overflow-hidden rounded-[14px] border border-teal-200 bg-[#f0fbf9] px-2.5 py-2 shadow-[0_4px_12px_rgba(20,30,55,0.05)] transition-all duration-200 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-teal-500 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[64px] sm:gap-2.5 sm:px-3 sm:py-2.5 lg:min-h-[72px]"
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-teal-700 bg-teal-600/10 hover:bg-teal-600/20 text-teal-950 dark:text-teal-100 text-sm font-bold transition-all shadow-xs"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-teal-400 to-teal-700 text-white shadow-sm sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-                        <Info className="h-4 w-4 sm:h-[18px] sm:w-[18px] lg:h-5 lg:w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-tight text-slate-900 sm:text-sm lg:text-base">6. À propos &amp; Sécurité</span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-1" />
+                      <Info className="w-5 h-5 text-teal-700 shrink-0" />
+                      <span>6. À propos & Sécurité</span>
                     </Link>
                   </nav>
                 </div>
 
-                <div className="relative isolate shrink-0 overflow-hidden border-t border-emerald-100 bg-white px-4 pb-10 pt-3 sm:px-5 sm:pt-4">
-                  <div className="relative z-10 mx-auto flex max-w-full items-center justify-center gap-2 text-center text-[11px] font-medium text-slate-600 sm:text-xs">
-                    <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-600 sm:h-5 sm:w-5" />
-                    <span className="min-w-0 break-words">Zando Africa <span className="px-1">•</span> Marketplace panafricaine</span>
+                <div className="p-4 border-t bg-muted/30 text-center">
+                  <div className="text-xs text-muted-foreground font-medium">
+                    Zando Africa • Marketplace panafricaine
                   </div>
-                  <svg aria-hidden="true" viewBox="0 0 800 60" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 w-full">
-                    <path d="M0 0 C145 18 235 48 390 42 C555 35 660 13 800 0 V60 H0 Z" fill="#F59E0B" />
-                    <path d="M0 16 C150 38 250 58 400 48 C565 38 690 24 800 11 V60 H0 Z" fill="#16A34A" />
-                  </svg>
                 </div>
               </SheetContent>
             </Sheet>
