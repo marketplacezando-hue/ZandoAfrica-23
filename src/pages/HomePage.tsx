@@ -13,6 +13,7 @@ import {
   RotateCw,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
   Flame,
   Sparkles,
   X
@@ -160,16 +161,22 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Search Header Bar */}
-      <section className="bg-gradient-to-b from-primary/5 to-transparent pt-4 pb-2">
-        <form onSubmit={handleSearchSubmit} className="max-w-3xl mx-auto flex items-center gap-2 px-1">
+      <section className="bg-gradient-to-b from-primary/5 to-transparent px-3 pb-4 pt-6 sm:pb-6 sm:pt-8">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="mx-auto flex max-w-4xl items-center gap-1.5 rounded-full border-4 border-emerald-50 bg-white p-1.5 shadow-[0_10px_30px_rgba(0,166,81,0.16)] ring-1 ring-emerald-100/80 sm:gap-2 sm:p-2"
+        >
+          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm sm:h-14 sm:w-14">
+            <Search className="h-5 w-5 sm:h-6 sm:w-6" />
+          </span>
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Que recherchez-vous ? (ex: iPhone, Voiture, Appartement...)"
+              aria-label="Que recherchez-vous ?"
+              placeholder="Que recherchez-vous ? (ex. : téléphone, voiture, maison…)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-9 py-2.5 h-12 rounded-full border-border/80 bg-card text-foreground shadow-xs text-xs sm:text-sm"
+              className="h-11 w-full rounded-full border-0 bg-slate-100/90 pl-4 pr-9 text-xs text-foreground shadow-none placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-14 sm:text-base"
             />
             {searchQuery && (
               <button
@@ -183,9 +190,11 @@ export const HomePage: React.FC = () => {
           </div>
           <Button
             type="submit"
-            className="h-12 px-4 sm:px-6 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xs text-xs sm:text-sm"
+            aria-label="Rechercher"
+            className="h-11 shrink-0 gap-1.5 rounded-full bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 sm:h-14 sm:gap-2 sm:px-8 sm:text-base"
           >
-            Rechercher
+            <span className="hidden sm:inline">Rechercher</span>
+            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </form>
       </section>
