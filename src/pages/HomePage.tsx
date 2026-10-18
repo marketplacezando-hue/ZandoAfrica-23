@@ -34,6 +34,7 @@ export const HomePage: React.FC = () => {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
 
   const popularScrollRef = useRef<HTMLDivElement>(null);
@@ -70,7 +71,7 @@ export const HomePage: React.FC = () => {
         zandoApi.getMixedProducts({
           countryId: selectedCountry?.id,
           categoryId: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchQuery || undefined
+          search: appliedSearchQuery || undefined
         }),
         zandoApi.getBannerAds('active')
       ]);
@@ -96,7 +97,7 @@ export const HomePage: React.FC = () => {
       country_code: selectedCountry?.id,
       city: selectedCountry?.name
     });
-  }, [selectedCountry?.id, selectedCategory, searchQuery]);
+  }, [selectedCountry?.id, selectedCategory, appliedSearchQuery]);
 
   // Synchronisation en temps réel via Supabase Realtime (Exigence Utilisateur)
   useEffect(() => {
@@ -124,7 +125,7 @@ export const HomePage: React.FC = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [selectedCountry?.id, selectedCategory, searchQuery]);
+  }, [selectedCountry?.id, selectedCategory, appliedSearchQuery]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -143,12 +144,29 @@ export const HomePage: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery) {
-      searchParams.set('q', searchQuery);
+    const normalizedSearch = searchQuery.trim();
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (normalizedSearch) {
+      nextSearchParams.set('q', normalizedSearch);
     } else {
-      searchParams.delete('q');
+      nextSearchParams.delete('q');
     }
-    setSearchParams(searchParams);
+    setSearchParams(nextSearchParams);
+    setSearchQuery(normalizedSearch);
+
+    if (normalizedSearch === appliedSearchQuery) {
+      void loadData();
+    } else {
+      setAppliedSearchQuery(normalizedSearch);
+    }
+  };
+
+  const handleSearchClear = () => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('q');
+    setSearchParams(nextSearchParams);
+    setSearchQuery('');
+    setAppliedSearchQuery('');
   };
 
   const scrollPopular = (direction: 'left' | 'right') => {
@@ -181,7 +199,7 @@ export const HomePage: React.FC = () => {
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={handleSearchClear}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
               >
                 <X className="w-4 h-4" />
