@@ -1,8 +1,23 @@
-const ORIGINS = new Set(['https://marketplacezando-hue.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']);
+const ORIGINS = new Set([
+  'https://marketplacezando-hue.github.io',
+  'https://zando-africa.vercel.app',
+  'https://zando-africa-23-git-feat-moneroo-integration-konolive23.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
+function isAllowedOrigin(origin) {
+  if (ORIGINS.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'https:' && url.origin === origin && /^zando-africa-23-[a-z0-9]+-konolive23\.vercel\.app$/.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
 const TYPES = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
 function cors(origin, publicAsset = false) {
   const h = new Headers({ 'Access-Control-Allow-Methods':'GET, HEAD, POST, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, X-Media-Folder', 'Access-Control-Max-Age':'86400', 'Vary':'Origin' });
-  if (publicAsset) h.set('Access-Control-Allow-Origin', '*'); else if (ORIGINS.has(origin)) h.set('Access-Control-Allow-Origin', origin);
+  if (publicAsset) h.set('Access-Control-Allow-Origin', '*'); else if (isAllowedOrigin(origin)) h.set('Access-Control-Allow-Origin', origin);
   return h;
 }
 function json(data, status, origin) { const h=cors(origin); h.set('Content-Type','application/json; charset=utf-8'); h.set('X-Content-Type-Options','nosniff'); return new Response(JSON.stringify(data),{status,headers:h}); }
@@ -35,10 +50,10 @@ async function media(req,env,key) {
 }
 export default { async fetch(req,env) {
   const u=new URL(req.url), origin=req.headers.get('Origin')||'';
-  if(req.method==='OPTIONS') return ORIGINS.has(origin)?new Response(null,{status:204,headers:cors(origin)}):new Response(null,{status:403});
+  if(req.method==='OPTIONS') return isAllowedOrigin(origin)?new Response(null,{status:204,headers:cors(origin)}):new Response(null,{status:403});
   if(u.pathname==='/health'&&req.method==='GET') return json({ok:true,service:'zandoafrica-media'},200,origin);
   if(u.pathname==='/upload'&&req.method==='POST') {
-    if(!ORIGINS.has(origin)) return json({error:'Origin not allowed'},403,origin);
+    if(!isAllowedOrigin(origin)) return json({error:'Origin not allowed'},403,origin);
     const type=(req.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase(), ext=TYPES[type];
     if(!ext) return json({error:'Unsupported media type'},415,origin);
     const limit=type.startsWith('image/')?10*1024*1024:50*1024*1024;

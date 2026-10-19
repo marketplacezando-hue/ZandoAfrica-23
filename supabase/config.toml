@@ -1,0 +1,4 @@
+[functions.moneroo-payments]
+# This public checkout accepts anonymous marketplace visitors. Amounts and service activation
+# are enforced server-side; webhooks authenticate with Moneroo's HMAC signature.
+verify_jwt = false

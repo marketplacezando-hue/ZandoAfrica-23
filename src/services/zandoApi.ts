@@ -569,27 +569,66 @@ export const zandoApi = {
   },
 
   // Media Upload via Cloudflare R2 Worker
-  async uploadMedia(file: File, folder = 'products'): Promise<string | null> {
+  async uploadMedia(file: File, folder = 'products'): Promise<{ url: string | null; error: string | null }> {
+    const workerUrl = import.meta.env.VITE_MEDIA_WORKER_URL;
+    if (!workerUrl) {
+      return { url: null, error: 'Le service de stockage des images n’est pas configuré sur cette version du site.' };
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+      mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime'
+    };
+    const aliases: Record<string, string> = {
+      'image/jpg': 'image/jpeg', 'image/pjpeg': 'image/jpeg', 'image/x-png': 'image/png'
+    };
+    const rawType = file.type.toLowerCase();
+    const contentType = aliases[rawType] || mimeByExtension[extension] || rawType;
+    const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(contentType);
+    const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(contentType);
+    if (!isImage && !isVideo) {
+      return { url: null, error: 'Format non pris en charge. Images acceptées : PNG, JPEG ou WebP.' };
+    }
+
+    const sizeLimit = (isImage ? 10 : 50) * 1024 * 1024;
+    if (file.size > sizeLimit) {
+      const actualSize = (file.size / (1024 * 1024)).toFixed(1);
+      return { url: null, error: `Fichier de ${actualSize} Mio : la limite est de ${isImage ? '10' : '50'} Mio.` };
+    }
+
     try {
-      const workerUrl = import.meta.env.VITE_MEDIA_WORKER_URL;
-      if (!workerUrl) return null;
-      const isImage = file.type.startsWith('image/');
-      const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
-      if ((!isImage && !isVideo) || file.size > (isImage ? 10 : 50) * 1024 * 1024) return null;
       const response = await fetch(`${workerUrl.replace(/\/$/, '')}/upload`, {
         method: 'POST',
         headers: {
-          'Content-Type': file.type,
+          'Content-Type': contentType,
           'X-Media-Folder': folder
         },
         body: file
       });
-      if (!response.ok) throw new Error(`Cloudflare media upload failed (${response.status})`);
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({})) as { error?: string };
+        const messages: Record<string, string> = {
+          'Origin not allowed': 'Ce domaine du site n’est pas autorisé. Ouvrez le domaine officiel ou l’aperçu stable.',
+          'Unsupported media type': 'Le format réel du fichier n’est pas pris en charge.',
+          'File too large': 'Le fichier dépasse la limite autorisée.',
+          'Empty or oversized file': 'Le fichier est vide ou dépasse la limite autorisée.',
+          'Invalid media folder': 'La destination de stockage est invalide.',
+          'Upload limit reached': 'La limite temporaire de téléversements est atteinte. Réessayez plus tard.',
+          'File signature mismatch': 'Le contenu du fichier ne correspond pas à son extension. Réexportez-le en PNG, JPEG ou WebP.'
+        };
+        const detail = result.error ? messages[result.error] || result.error : 'Réponse invalide du stockage.';
+        return { url: null, error: `${detail} (HTTP ${response.status})` };
+      }
       const result = await response.json() as { url?: string };
-      return result.url || null;
+      if (!result.url) return { url: null, error: 'Le stockage a accepté le fichier mais n’a pas renvoyé son adresse.' };
+      return { url: result.url, error: null };
     } catch (e) {
       console.error('Upload exception:', e);
-      return null;
+      return {
+        url: null,
+        error: 'Impossible de joindre le stockage. Vérifiez la connexion et que vous utilisez le domaine officiel ou l’aperçu stable.'
+      };
     }
   },
 
