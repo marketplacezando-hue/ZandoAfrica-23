@@ -12,6 +12,7 @@ import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { PublishProductPage } from '@/pages/PublishProductPage';
 import { BannerAdPage } from '@/pages/BannerAdPage';
 import { SubscriptionPage } from '@/pages/SubscriptionPage';
+import { PaymentReturnPage } from '@/pages/PaymentReturnPage';
 import { VerifyCodePage } from '@/pages/VerifyCodePage';
 import { FavoritesPage } from '@/pages/FavoritesPage';
 import { AboutPage } from '@/pages/AboutPage';
@@ -45,6 +46,7 @@ const App: React.FC = () => {
               <Route path="/publier" element={<PublicLayout><PublishProductPage /></PublicLayout>} />
               <Route path="/passer-pub" element={<PublicLayout><BannerAdPage /></PublicLayout>} />
               <Route path="/abonnement" element={<PublicLayout><SubscriptionPage /></PublicLayout>} />
+              <Route path="/paiement/resultat" element={<PublicLayout><PaymentReturnPage /></PublicLayout>} />
               <Route path="/verifier-code" element={<PublicLayout><VerifyCodePage /></PublicLayout>} />
               <Route path="/favoris" element={<PublicLayout><FavoritesPage /></PublicLayout>} />
               <Route path="/a-propos" element={<PublicLayout><AboutPage /></PublicLayout>} />

@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/common/CountrySelect';
+import { createMonerooPayment } from '@/services/monerooPayments';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -41,6 +42,7 @@ export const PublishProductPage: React.FC = () => {
   const [countryId, setCountryId] = useState(selectedCountry?.id || 'CG');
   const [city, setCity] = useState('');
   const [sellerName, setSellerName] = useState('');
+  const [sellerEmail, setSellerEmail] = useState('');
   const [dialCode, setDialCode] = useState(selectedCountry?.dial_code || '+242');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [description, setDescription] = useState('');
@@ -165,6 +167,10 @@ export const PublishProductPage: React.FC = () => {
       toast.error('Veuillez renseigner le nom du vendeur.');
       return false;
     }
+    if (effectivePrice > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail.trim())) {
+      toast.error('Veuillez renseigner une adresse e-mail valide pour le reçu de paiement.');
+      return false;
+    }
     if (!phoneNumber.trim() || phoneNumber.length < 6) {
       toast.error('Veuillez renseigner un numéro WhatsApp valide.');
       return false;
@@ -198,6 +204,29 @@ export const PublishProductPage: React.FC = () => {
       setPromoErrorMessage(res.reason || 'Code promo invalide.');
       toast.error(res.reason || 'Code promo invalide.');
     }
+  };
+
+  const startProductPayment = async (itemId: string) => {
+    const names = sellerName.trim().split(/\s+/);
+    const payment = await createMonerooPayment({
+      serviceType: 'product_listing',
+      itemId,
+      customer: {
+        first_name: names[0] || 'Vendeur',
+        last_name: names.slice(1).join(' ') || '-',
+        email: sellerEmail.trim(),
+        phone: fullPhone,
+      },
+    });
+    if (payment.data?.checkout_url) {
+      window.location.assign(payment.data.checkout_url);
+      return;
+    }
+    if (payment.data?.reference) {
+      navigate(`/paiement/resultat?reference=${encodeURIComponent(payment.data.reference)}`);
+      return;
+    }
+    toast.error(payment.error || 'Le paiement est indisponible. Votre annonce reste en attente, sans être publiée.');
   };
 
   // Final Publish Handler
@@ -242,7 +271,8 @@ export const PublishProductPage: React.FC = () => {
         if (res.data.status === 'published') {
           toast.success('Votre annonce est publiée.');
         } else {
-          toast.info('Votre demande est enregistrée et sera publiée après confirmation du paiement.');
+          toast.info('Votre annonce est enregistrée. Redirection vers le paiement sécurisé Moneroo.');
+          await startProductPayment(res.data.id);
         }
       } else {
         toast.error(`Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
@@ -411,6 +441,21 @@ export const PublishProductPage: React.FC = () => {
                   Les acheteurs cliqueront directement sur ce numéro pour vous contacter sur WhatsApp.
                 </p>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground" htmlFor="seller-payment-email">Adresse e-mail pour le reçu de paiement {effectivePrice > 0 ? '*' : '(facultatif)'}</label>
+              <Input
+                id="seller-payment-email"
+                type="email"
+                autoComplete="email"
+                placeholder="Ex. : vendeur@boutique.com"
+                value={sellerEmail}
+                onChange={e => setSellerEmail(e.target.value)}
+                className="h-11 rounded-xl"
+                required={effectivePrice > 0}
+              />
+              <p className="text-[11px] text-muted-foreground">Cette adresse est transmise à Moneroo pour le reçu et n’apparaît pas sur l’annonce.</p>
             </div>
 
             {/* Description */}
@@ -726,7 +771,7 @@ export const PublishProductPage: React.FC = () => {
               {effectivePrice > 0 && (
                 <div className="flex items-start gap-2 pt-3 border-t text-xs text-amber-800 bg-amber-50 rounded-lg p-3">
                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <p>Le paiement en ligne n’est pas encore connecté. Votre demande sera enregistrée comme « en attente » ; aucun paiement ne sera prélevé et l’annonce ne sera visible qu’après validation.</p>
+                  <p>Vous serez redirigé vers Moneroo pour régler ce tarif. L’annonce restera invisible tant que Moneroo n’aura pas confirmé le paiement.</p>
                 </div>
               )}
             </div>
@@ -748,7 +793,7 @@ export const PublishProductPage: React.FC = () => {
                 className="h-12 px-8 rounded-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold gap-2 cursor-pointer shadow-md text-sm sm:text-base active:scale-95"
               >
                 <CreditCard className="w-4 h-4" />
-                <span>{submitting ? 'Enregistrement...' : effectivePrice === 0 ? 'Publier gratuitement' : 'Envoyer la demande'}</span>
+                <span>{submitting ? 'Enregistrement...' : effectivePrice === 0 ? 'Publier gratuitement' : 'Payer et publier'}</span>
               </Button>
             </div>
           </div>
@@ -779,6 +824,14 @@ export const PublishProductPage: React.FC = () => {
                   className="w-full sm:w-auto h-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
                 >
                   Voir mon annonce
+                </Button>
+              )}
+              {publishedId && publicationStatus === 'pending_payment' && (
+                <Button
+                  onClick={() => void startProductPayment(publishedId)}
+                  className="w-full sm:w-auto h-11 rounded-full bg-secondary font-bold gap-2"
+                >
+                  <CreditCard className="w-4 h-4" /> Régler maintenant
                 </Button>
               )}
               <Button

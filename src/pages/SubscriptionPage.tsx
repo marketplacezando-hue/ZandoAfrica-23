@@ -5,11 +5,13 @@ import { zandoApi } from '@/services/zandoApi';
 import {
   CheckCircle2,
   Zap,
-  ChevronLeft
+  ChevronLeft,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { createMonerooPayment } from '@/services/monerooPayments';
 
 export const SubscriptionPage: React.FC = () => {
   const { settings } = useZando();
@@ -24,6 +26,7 @@ export const SubscriptionPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
 
   const subscriptionPlans = settings.subscription_plans || [
     { months: 1, price: 15000, currency: 'FCFA', limit: 30, name: 'Formule Starter (1 Mois)' },
@@ -32,6 +35,28 @@ export const SubscriptionPage: React.FC = () => {
   ];
 
   const currentPlan = subscriptionPlans.find(p => p.months === selectedPlanMonths) || subscriptionPlans[0];
+
+  const startSubscriptionPayment = async (itemId: string) => {
+    const payment = await createMonerooPayment({
+      serviceType: 'subscription',
+      itemId,
+      customer: {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        phone: phoneNumber.trim(),
+      },
+    });
+    if (payment.data?.checkout_url) {
+      window.location.assign(payment.data.checkout_url);
+      return;
+    }
+    if (payment.data?.reference) {
+      navigate(`/paiement/resultat?reference=${encodeURIComponent(payment.data.reference)}`);
+      return;
+    }
+    toast.error(payment.error || 'Le paiement est indisponible. Votre abonnement reste en attente.');
+  };
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +77,10 @@ export const SubscriptionPage: React.FC = () => {
         toast.error(`Erreur : ${result.error || 'Impossible d’enregistrer la demande'}`);
         return;
       }
+      if (result.data?.id) setSubscriptionId(result.data.id);
       setRequestSubmitted(true);
-      toast.info('Demande enregistrée. Aucun paiement n’a été prélevé.');
+      toast.info('Demande enregistrée. Redirection vers le paiement sécurisé Moneroo.');
+      if (result.data?.id) await startSubscriptionPayment(result.data.id);
     } catch (err) {
       console.error(err);
       toast.error('Une erreur est survenue.');
@@ -73,10 +100,18 @@ export const SubscriptionPage: React.FC = () => {
             Demande d’abonnement reçue
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Merci <strong>{firstName} {lastName}</strong>. Votre demande pour <strong>{currentPlan.name}</strong> a été enregistrée. Aucun paiement n’a été prélevé et l’abonnement ne sera activé qu’après confirmation du paiement.
+            Merci <strong>{firstName} {lastName}</strong>. Votre demande pour <strong>{currentPlan.name}</strong> a été enregistrée. L’abonnement ne sera activé qu’après confirmation du paiement par Moneroo.
           </p>
         </div>
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {subscriptionId && (
+            <Button
+              onClick={() => void startSubscriptionPayment(subscriptionId)}
+              className="w-full sm:w-auto rounded-full bg-secondary font-bold gap-2 h-11"
+            >
+              <CreditCard className="w-4 h-4" /> Régler maintenant
+            </Button>
+          )}
           <Button
             onClick={() => navigate('/')}
             className="w-full sm:w-auto rounded-full bg-primary font-bold h-11"

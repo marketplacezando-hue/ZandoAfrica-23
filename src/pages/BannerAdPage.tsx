@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { createMonerooPayment } from '@/services/monerooPayments';
 
 export const BannerAdPage: React.FC = () => {
   const { settings } = useZando();
@@ -27,6 +28,9 @@ export const BannerAdPage: React.FC = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'active' | 'pending_payment' | null>(null);
+  const [adId, setAdId] = useState<string | null>(null);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
 
   const adPricing = settings.ad_pricing || [
     { months: 1, price: 30000, currency: 'FCFA', name: 'Bannière VIP 1 Mois' },
@@ -35,6 +39,30 @@ export const BannerAdPage: React.FC = () => {
   ];
 
   const currentPlan = adPricing.find(p => p.months === durationMonths) || adPricing[0];
+  const isFreeMode = settings.site_mode?.mode === 'free';
+
+  const startBannerPayment = async (itemId: string) => {
+    const names = contactName.trim().split(/\s+/);
+    const payment = await createMonerooPayment({
+      serviceType: 'banner_ad',
+      itemId,
+      customer: {
+        first_name: names[0] || 'Client',
+        last_name: names.slice(1).join(' ') || '-',
+        email: contactEmail.trim(),
+        phone: phoneNumber.trim(),
+      },
+    });
+    if (payment.data?.checkout_url) {
+      window.location.assign(payment.data.checkout_url);
+      return;
+    }
+    if (payment.data?.reference) {
+      navigate(`/paiement/resultat?reference=${encodeURIComponent(payment.data.reference)}`);
+      return;
+    }
+    toast.error(payment.error || 'Le paiement est indisponible. Votre campagne reste en attente et invisible.');
+  };
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -64,6 +92,10 @@ export const BannerAdPage: React.FC = () => {
       toast.error('Veuillez renseigner un numéro de téléphone.');
       return;
     }
+    if (!isFreeMode && currentPlan.price > 0 && (!contactName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim()))) {
+      toast.error('Veuillez renseigner votre nom et une adresse e-mail valide pour le reçu.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -79,9 +111,15 @@ export const BannerAdPage: React.FC = () => {
       });
 
       if (res.success && res.data) {
+        setAdId(res.data.id);
         const status = res.data.status === 'active' ? 'active' : 'pending_payment';
         setSubmissionStatus(status);
-        toast.info(status === 'active' ? 'Campagne enregistrée.' : 'Demande enregistrée en attente de confirmation du paiement.');
+        if (status === 'active') {
+          toast.success('Campagne enregistrée.');
+        } else {
+          toast.info('Votre campagne est enregistrée. Redirection vers Moneroo.');
+          await startBannerPayment(res.data.id);
+        }
       } else {
         toast.error(`Erreur : ${res.error || 'Impossible de créer la campagne'}`);
       }
@@ -105,9 +143,14 @@ export const BannerAdPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-muted-foreground">
           {submissionStatus === 'active'
             ? `Votre bannière « ${title} » est active pour ${durationMonths} mois.`
-            : `Votre bannière « ${title} » est en attente de confirmation du paiement. Aucun paiement n’a été prélevé et elle n’est pas encore visible.`}
+            : `Votre bannière « ${title} » restera invisible jusqu’à confirmation du paiement par Moneroo.`}
         </p>
         <div className="pt-4 flex justify-center gap-3">
+          {submissionStatus === 'pending_payment' && adId && (
+            <Button onClick={() => void startBannerPayment(adId)} className="rounded-full bg-blue-600 font-bold">
+              Régler maintenant
+            </Button>
+          )}
           <Button onClick={() => navigate('/')} className="rounded-full bg-primary font-bold">
             Voir sur la page d'accueil
           </Button>
@@ -220,6 +263,17 @@ export const BannerAdPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground" htmlFor="banner-contact-name">Nom du contact {!isFreeMode && currentPlan.price > 0 ? '*' : '(facultatif)'}</label>
+            <Input id="banner-contact-name" autoComplete="name" value={contactName} onChange={e => setContactName(e.target.value)} className="h-11 rounded-xl" required={!isFreeMode && currentPlan.price > 0} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground" htmlFor="banner-contact-email">E-mail pour le reçu Moneroo {!isFreeMode && currentPlan.price > 0 ? '*' : '(facultatif)'}</label>
+            <Input id="banner-contact-email" type="email" autoComplete="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="h-11 rounded-xl" required={!isFreeMode && currentPlan.price > 0} />
+          </div>
+        </div>
+
         {/* Durée et tarifs */}
         <div className="space-y-3 border-t pt-4">
           <label className="text-xs font-bold text-foreground">Formule de diffusion *</label>
@@ -252,11 +306,11 @@ export const BannerAdPage: React.FC = () => {
           >
             <CheckCircle2 className="w-5 h-5" />
             <span>
-              {submitting ? 'Envoi en cours...' : 'Envoyer la demande'}
+            {submitting ? 'Envoi en cours...' : currentPlan.price > 0 ? 'Payer et lancer la campagne' : 'Envoyer la demande'}
             </span>
           </Button>
           <p className="text-[11px] text-muted-foreground text-center mt-2">
-            Le paiement en ligne n’est pas encore connecté. Aucune somme ne sera prélevée ; une campagne payante restera en attente de confirmation.
+            Le règlement est traité sur la page sécurisée Moneroo. La campagne ne sera active qu’après confirmation du paiement.
           </p>
         </div>
       </form>
