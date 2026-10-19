@@ -21,6 +21,13 @@ const ALLOWED_ORIGINS = new Set([
   ...(SITE_URL ? [new URL(SITE_URL).origin] : []),
   'http://localhost:5173',
 ]);
+console.info('moneroo_runtime_config_presence', {
+  supabaseUrl: Boolean(SUPABASE_URL),
+  serviceRoleKey: Boolean(SERVICE_ROLE_KEY),
+  monerooSecretKey: Boolean(MONEROO_SECRET_KEY),
+  monerooWebhookSecret: Boolean(MONEROO_WEBHOOK_SECRET),
+  siteUrl: Boolean(SITE_URL),
+});
 const MONEROO_API = 'https://api.moneroo.io';
 const MAX_BODY_BYTES = 64 * 1024;
 
