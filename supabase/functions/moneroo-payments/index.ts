@@ -21,6 +21,21 @@ const ALLOWED_ORIGINS = new Set([
   ...(SITE_URL ? [new URL(SITE_URL).origin] : []),
   'http://localhost:5173',
 ]);
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== 'https:' || url.origin !== origin) return false;
+    const host = url.hostname;
+    return host === 'zando-africa.vercel.app'
+      || host === 'zando-africa-23.vercel.app'
+      || host === 'zando-africa-23-konolive23.vercel.app'
+      || /^zando-africa-23-(?:[a-z0-9]+|git-[a-z0-9-]+)-konolive23\.vercel\.app$/.test(host);
+  } catch {
+    return false;
+  }
+}
 console.info('moneroo_runtime_config_presence', {
   supabaseUrl: Boolean(SUPABASE_URL),
   serviceRoleKey: Boolean(SERVICE_ROLE_KEY),
@@ -57,7 +72,7 @@ type Tx = {
 
 function response(body: JsonRecord, status = 200, origin?: string | null): Response {
   const headers = new Headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
+  if (origin && isAllowedOrigin(origin)) {
     headers.set('access-control-allow-origin', origin);
     headers.set('vary', 'Origin');
   }
@@ -493,7 +508,7 @@ Deno.serve(async (request: Request) => {
   const url = new URL(request.url);
   const webhookRoute = url.pathname.endsWith('/webhook');
 
-  if (!webhookRoute && origin && !ALLOWED_ORIGINS.has(origin)) return errorResponse('Origine non autorisée', 403);
+  if (!webhookRoute && origin && !isAllowedOrigin(origin)) return errorResponse('Origine non autorisée', 403);
   if (!webhookRoute && request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
