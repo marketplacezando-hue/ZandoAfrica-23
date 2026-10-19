@@ -99,11 +99,11 @@ export const PublishProductPage: React.FC = () => {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const url = await zandoApi.uploadMedia(file, 'products');
-      if (url) {
-        uploadedUrls.push(url);
+      const result = await zandoApi.uploadMedia(file, 'products');
+      if (result.url) {
+        uploadedUrls.push(result.url);
       } else {
-        toast.error(`Impossible de téléverser ${file.name}. Vérifiez la connexion au stockage puis réessayez.`);
+        toast.error(`Impossible de téléverser ${file.name}. ${result.error || 'Réessayez.'}`);
       }
     }
 
@@ -122,12 +122,12 @@ export const PublishProductPage: React.FC = () => {
     setUploadingVideo(true);
     toast.info('Chargement de la vidéo depuis votre galerie...');
 
-    const url = await zandoApi.uploadMedia(file, 'videos');
-    if (url) {
-      setVideoUrl(url);
+    const result = await zandoApi.uploadMedia(file, 'videos');
+    if (result.url) {
+      setVideoUrl(result.url);
       toast.success('Vidéo ajoutée avec succès !');
     } else {
-      toast.error('La vidéo n’a pas été téléversée. Réessayez avant de continuer.');
+      toast.error(result.error || 'La vidéo n’a pas été téléversée. Réessayez avant de continuer.');
     }
     setUploadingVideo(false);
   };
@@ -139,12 +139,12 @@ export const PublishProductPage: React.FC = () => {
     setUploadingAvatar(true);
     toast.info('Chargement de votre photo de profil...');
 
-    const url = await zandoApi.uploadMedia(file, 'avatars');
-    if (url) {
-      setSellerPhotoUrl(url);
+    const result = await zandoApi.uploadMedia(file, 'avatars');
+    if (result.url) {
+      setSellerPhotoUrl(result.url);
       toast.success('Photo de profil vendeur mise à jour !');
     } else {
-      toast.error('La photo de profil n’a pas été téléversée. Réessayez avant de continuer.');
+      toast.error(result.error || 'La photo de profil n’a pas été téléversée. Réessayez avant de continuer.');
     }
     setUploadingAvatar(false);
   };
@@ -541,7 +541,7 @@ export const PublishProductPage: React.FC = () => {
                     <span>Choisir ma photo de profil</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handleAvatarSelect}
                       className="hidden"
                       disabled={uploadingAvatar}
@@ -586,7 +586,7 @@ export const PublishProductPage: React.FC = () => {
                     <span className="text-[10px] text-muted-foreground">Depuis la galerie</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       multiple
                       onChange={handlePhotoSelect}
                       className="hidden"
@@ -632,7 +632,7 @@ export const PublishProductPage: React.FC = () => {
                   </span>
                   <input
                     type="file"
-                    accept="video/*"
+                    accept="video/mp4,video/webm,video/quicktime"
                     onChange={handleVideoSelect}
                     className="hidden"
                     disabled={uploadingVideo}

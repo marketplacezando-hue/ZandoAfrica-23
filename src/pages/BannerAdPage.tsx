@@ -67,13 +67,13 @@ export const BannerAdPage: React.FC = () => {
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setUploadingImage(true);
-    const url = await zandoApi.uploadMedia(e.target.files[0], 'banners');
-    if (url) {
-      setImageUrl(url);
+    const result = await zandoApi.uploadMedia(e.target.files[0], 'banners');
+    if (result.url) {
+      setImageUrl(result.url);
       toast.success('Bannière téléversée avec succès !');
     } else {
       setImageUrl('');
-      toast.error('La bannière n’a pas été téléversée. Réessayez avant de continuer.');
+      toast.error(result.error || 'La bannière n’a pas été téléversée. Réessayez avant de continuer.');
     }
     setUploadingImage(false);
   };
@@ -217,7 +217,7 @@ export const BannerAdPage: React.FC = () => {
               <span className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP (Dimensions recommandées: 1200x400px)</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 onChange={handleImageSelect}
                 className="hidden"
                 disabled={uploadingImage}
