@@ -1,4 +1,10 @@
-const ORIGINS = new Set(['https://marketplacezando-hue.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']);
+const ORIGINS = new Set([
+  'https://marketplacezando-hue.github.io',
+  'https://zando-africa.vercel.app',
+  'https://zando-africa-23-git-feat-moneroo-integration-konolive23.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
 const TYPES = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
 function cors(origin, publicAsset = false) {
   const h = new Headers({ 'Access-Control-Allow-Methods':'GET, HEAD, POST, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, X-Media-Folder', 'Access-Control-Max-Age':'86400', 'Vary':'Origin' });
