@@ -1,5 +1,17 @@
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+function getServiceRoleKey(): string {
+  const legacyKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (legacyKey) return legacyKey;
+  try {
+    const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}') as Record<string, unknown>;
+    if (typeof keys.default === 'string') return keys.default;
+    const firstKey = Object.values(keys).find((value): value is string => typeof value === 'string');
+    return firstKey ?? '';
+  } catch {
+    return '';
+  }
+}
+const SERVICE_ROLE_KEY = getServiceRoleKey();
 const MONEROO_SECRET_KEY = Deno.env.get('MONEROO_SECRET_KEY') ?? '';
 const MONEROO_WEBHOOK_SECRET = Deno.env.get('MONEROO_WEBHOOK_SECRET') ?? '';
 const SITE_URL = (Deno.env.get('ZANDO_SITE_URL') ?? '').replace(/\/$/, '');
