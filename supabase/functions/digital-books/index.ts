@@ -19,14 +19,14 @@ function getServiceRoleKey(): string {
 const SERVICE_ROLE_KEY = getServiceRoleKey();
 const WORKER_URL = (Deno.env.get('DIGITAL_BOOKS_WORKER_URL') ?? '').replace(/\/+$/, '');
 const STORAGE_SECRET = Deno.env.get('DIGITAL_BOOKS_STORAGE_SECRET') ?? '';
-const DEFAULT_PDF_MAX_BYTES = 20 * 1024 * 1024;
+const DEFAULT_PDF_MAX_BYTES = 300 * 1024 * 1024;
 const JSON_MAX_BYTES = 16 * 1024;
-const BODY_TIMEOUT_MS = 30_000;
-const WORKER_TIMEOUT_MS = 60_000;
+const BODY_TIMEOUT_MS = 10 * 60_000;
+const WORKER_TIMEOUT_MS = 10 * 60_000;
 const UPLOAD_TTL_MS = 60 * 60 * 1000;
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ACTIONS = ['upload', 'preview', 'create_purchase', 'download'] as const;
+const ACTIONS = ['upload', 'preview'] as const;
 type Action = typeof ACTIONS[number];
 type JsonRecord = Record<string, unknown>;
 type PrivateKind = 'originals' | 'previews';
@@ -114,7 +114,7 @@ let databaseClient: SupabaseClient | null = null;
 function database(): SupabaseClient {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     throw new HttpError(503, 'supabase_not_configured',
-      'Le service de livres numériques nécessite SUPABASE_URL et une clé service_role (SUPABASE_SERVICE_ROLE_KEY ou SUPABASE_SECRET_KEYS).');
+      'Le service d’aperçu numérique nécessite SUPABASE_URL et une clé service_role (SUPABASE_SERVICE_ROLE_KEY ou SUPABASE_SECRET_KEYS).');
   }
   if (!isBackendUrl(SUPABASE_URL)) {
     throw new HttpError(503, 'supabase_url_invalid', 'La configuration SUPABASE_URL est invalide.');
@@ -316,7 +316,7 @@ async function deleteWorkerObject(kind: PrivateKind, key: string): Promise<void>
   void result.body?.cancel().catch(() => {});
 }
 
-type DigitalRateScope = 'upload' | 'preview' | 'create_purchase' | 'download';
+type DigitalRateScope = 'upload' | 'preview';
 function trustedClientIp(request: Request): string {
   // The Supabase Edge gateway overwrites CF-Connecting-IP and appends the
   // originating peer to X-Forwarded-For. Prefer its single-IP header; otherwise
@@ -389,7 +389,7 @@ async function upload(request: Request, origin: string | null): Promise<Response
     // Serialize a NEW document, never the original with pages merely hidden.
     // Page annotations (including destinations pointing at excluded pages),
     // actions and auxiliary metadata are not imported into the public preview.
-    const indices = Array.from({ length: Math.min(5, pageCount) }, (_, index) => index);
+    const indices = Array.from({ length: Math.min(10, pageCount) }, (_, index) => index);
     for (const index of indices) {
       const page = source.getPage(index);
       for (const name of ['Annots', 'AA', 'Metadata', 'PieceInfo', 'Thumb', 'B', 'PresSteps', 'SeparationInfo']) {
@@ -496,52 +496,6 @@ function validateCustomer(value: unknown): void {
     throw new HttpError(400, 'invalid_customer', 'Le prénom, le nom, l’email ou le téléphone du client est invalide.');
   }
 }
-async function createPurchase(request: Request, body: JsonRecord, origin: string | null): Promise<Response> {
-  await enforceRateLimit(request, 'create_purchase');
-  validateCustomer(body.customer);
-  const db = database();
-  const productId = await requirePublishedProduct(db, body.product_id);
-  const { data: book, error } = await db.from('digital_books').select('id')
-    .eq('product_id', productId).eq('status', 'published').maybeSingle();
-  checkDatabaseError(error, 'digital_books');
-  if (!book || !isUuid(book.id)) throw new HttpError(404, 'book_not_found', 'Ce livre numérique publié est introuvable.');
-  // Compatibility name only: this is the book ID, NOT a transaction/entitlement.
-  // moneroo-payments(action=create) -> prepare_moneroo_payment is the sole
-  // creator of the transaction; that RPC validates the current price/customer.
-  return jsonResponse({ purchaseId: book.id }, origin);
-}
-async function download(request: Request, body: JsonRecord, origin: string | null): Promise<Response> {
-  await enforceRateLimit(request, 'download');
-  if (!isUuid(body.reference)) throw new HttpError(400, 'invalid_reference', 'La référence de paiement est invalide.');
-  const db = database();
-  const { data: transaction, error: transactionError } = await db.from('transactions')
-    .select('id,reference,type,item_id,status').eq('reference', body.reference).eq('type', 'book_purchase').maybeSingle();
-  checkDatabaseError(transactionError, 'transactions');
-  if (!transaction || !isUuid(transaction.item_id)) throw new HttpError(404, 'purchase_not_found', 'Cet achat de livre numérique est introuvable.');
-  if (transaction.status !== 'completed') throw new HttpError(403, 'payment_not_completed', 'Le paiement de cet achat n’est pas confirmé.');
-  // Entitlement.reference is independent of transactions.reference in the SQL
-  // schema. Resolve the supplied PAYMENT reference through transaction_id,
-  // never compare the two unrelated references or accept a browser entitlement.
-  const { data: entitlement, error: entitlementError } = await db.from('digital_book_entitlements')
-    .select('id').eq('transaction_id', transaction.id)
-    .eq('digital_book_id', transaction.item_id).eq('status', 'completed').maybeSingle();
-  checkDatabaseError(entitlementError, 'digital_book_entitlements');
-  if (!entitlement) throw new HttpError(403, 'entitlement_not_completed', 'Aucun droit de téléchargement terminé ne correspond à cet achat.');
-  // Access depends ONLY on BOTH server-side completed statuses and the matching
-  // transaction/reference/book. Ignore browser email, status or payment claims.
-  // A later expiry of the public listing does not invalidate a completed purchase.
-  const { data: book, error: bookError } = await db.from('digital_books').select('original_key')
-    .eq('id', transaction.item_id).maybeSingle();
-  checkDatabaseError(bookError, 'digital_books');
-  if (!book) throw new HttpError(404, 'book_not_found', 'Le livre acheté est introuvable.');
-  if (!validPrivateKey(book.original_key, 'originals')) {
-    throw new HttpError(503, 'book_original_metadata_invalid', 'Les métadonnées privées du livre acheté sont invalides.');
-  }
-  requireWorker();
-  const result = await workerRequest('originals', book.original_key);
-  return pdfResponse(result, origin, 'attachment');
-}
-
 export async function handleRequest(request: Request): Promise<Response> {
   const startedAt = Date.now();
   const origin = request.headers.get('origin');
@@ -584,12 +538,11 @@ export async function handleRequest(request: Request): Promise<Response> {
         throw new HttpError(400, 'conflicting_action', 'L’action JSON ne correspond pas à celle de l’URL.');
       }
       const requestedAction = queryAction ?? body.action;
-      if (!isAction(requestedAction)) throw new HttpError(400, 'invalid_action', 'Une action upload, preview, create_purchase ou download est requise.');
+      if (!isAction(requestedAction)) throw new HttpError(400, 'invalid_action', 'Une action upload ou preview est requise.');
       action = requestedAction;
       if (action === 'upload') throw new HttpError(415, 'binary_upload_required', 'Utilisez POST ?action=upload avec un corps binaire application/pdf.');
       if (action === 'preview') result = await preview(request, body, origin);
-      else if (action === 'create_purchase') result = await createPurchase(request, body, origin);
-      else result = await download(request, body, origin);
+      else result = await preview(request, body, origin);
     }
     status = result.status;
     return result;

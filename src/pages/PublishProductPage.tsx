@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { CountrySelect } from '@/components/common/CountrySelect';
 import { createMonerooPayment } from '@/services/monerooPayments';
 import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
+import { isValidMerchantUrl } from '@/lib/digitalProducts';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -86,7 +87,7 @@ export const PublishProductPage: React.FC = () => {
 
   const digitalCategoryAvailable = categories.some(category => category.id === 'digital-products');
   const isDigitalProduct = digitalCategoryAvailable && categoryId === 'digital-products';
-  const digitalPdfMaxBytes = Math.min(20 * 1024 * 1024, Math.max(1, Number(settings.digital_pdf_max_bytes) || 20 * 1024 * 1024));
+  const digitalPdfMaxBytes = Math.min(300 * 1024 * 1024, Math.max(1, Number(settings.digital_pdf_max_bytes) || 300 * 1024 * 1024));
   const digitalPdfMaxMiB = (digitalPdfMaxBytes / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
   // Pricing calculations
@@ -229,6 +230,10 @@ export const PublishProductPage: React.FC = () => {
     }
     if (!phoneNumber.trim() || phoneNumber.length < 6) {
       toast.error('Veuillez renseigner un numéro WhatsApp valide.');
+      return false;
+    }
+    if (isDigitalProduct && !isValidMerchantUrl(externalUrl)) {
+      toast.error('Veuillez renseigner un lien marchand HTTP ou HTTPS valide.');
       return false;
     }
     return true;
@@ -543,13 +548,15 @@ export const PublishProductPage: React.FC = () => {
                 <span className="text-[11px] text-primary font-normal">Active le bouton marchand</span>
               </label>
               <Input
+                type="url"
                 placeholder="https://maboutique.com/produit/123"
                 value={externalUrl}
                 onChange={e => setExternalUrl(e.target.value)}
+                required={isDigitalProduct}
                 className="h-11 rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
-                Si renseigné, un bouton « Acheter sur le site marchand » apparaîtra directement sur la fiche produit pour rediriger l'acheteur vers votre site.
+                {isDigitalProduct ? 'Obligatoire pour les produits digitaux. HTTP/HTTPS uniquement; HTTPS est recommandé.' : 'Si renseigné, un bouton marchand apparaîtra directement sur la fiche produit.'}
               </p>
             </div>
 
@@ -694,7 +701,7 @@ export const PublishProductPage: React.FC = () => {
                   <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-border hover:border-primary bg-muted/10 hover:bg-primary/5 cursor-pointer transition-colors">
                     <Upload className="w-8 h-8 text-primary mb-2" />
                     <span className="text-xs sm:text-sm font-bold text-foreground">Sélectionner le fichier PDF</span>
-                    <span className="text-[11px] text-muted-foreground mt-0.5">PDF uniquement · limite configurée : {digitalPdfMaxMiB} Mio</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">PDF uniquement · limite configurée : {digitalPdfMaxMiB} Mio · transfert sécurisé</span>
                     <input
                       type="file"
                       accept=".pdf,application/pdf"

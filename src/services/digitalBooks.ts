@@ -1,6 +1,6 @@
 import { supabase } from '@/db/supabase';
 
-export const DIGITAL_BOOK_MAX_BYTES = 20 * 1024 * 1024;
+export const DIGITAL_BOOK_MAX_BYTES = 300 * 1024 * 1024;
 const PDF_SIGNATURE = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 
 export type DigitalBookUpload = {
@@ -101,13 +101,6 @@ export async function uploadDigitalBook(file: File, maxBytes = DIGITAL_BOOK_MAX_
   };
 }
 
-export type DigitalBookCustomer = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-};
-
 async function digitalBooksRequest(action: string, body: Record<string, unknown>): Promise<Response> {
   const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
   const publishableKey = String(
@@ -164,26 +157,4 @@ export async function getDigitalPreview(productId: string): Promise<{
     return { blobUrl: '', totalPages: 0, error: 'L’aperçu PDF renvoyé par le serveur est invalide.' };
   }
   return { blobUrl: URL.createObjectURL(pdf), totalPages: pageCount };
-}
-
-export async function createDigitalPurchase(
-  productId: string,
-  customer: DigitalBookCustomer
-): Promise<{ purchaseId?: string; error?: string }> {
-  const response = await digitalBooksRequest('create_purchase', { product_id: productId, customer });
-  if (!response.ok) return { error: await responseError(response) };
-  const data = await response.json() as { purchase_id?: unknown };
-  return typeof data.purchase_id === 'string' && data.purchase_id
-    ? { purchaseId: data.purchase_id }
-    : { error: 'Le service de paiement n’a pas renvoyé de référence de livre valide.' };
-}
-
-export async function getDigitalDownload(reference: string): Promise<{ url?: string; error?: string }> {
-  const response = await digitalBooksRequest('download', { reference });
-  if (!response.ok) return { error: await responseError(response) };
-  const pdf = await response.blob();
-  if (pdf.type !== 'application/pdf' || pdf.size === 0) {
-    return { error: 'Le téléchargement renvoyé par le serveur n’est pas un PDF valide.' };
-  }
-  return { url: URL.createObjectURL(pdf) };
 }

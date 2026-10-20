@@ -1,17 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Clock3, CreditCard, Download, Loader2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, CreditCard, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { verifyMonerooPayment, retryMonerooPayment, type MonerooPaymentResult } from '@/services/monerooPayments';
-import * as digitalBooks from '@/services/digitalBooks';
 
 type ViewState = 'loading' | 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded' | 'error';
 type PaymentReturnResult = MonerooPaymentResult & { type?: MonerooPaymentResult['type'] | 'book_purchase' };
-type DigitalBooksApi = {
-  getDigitalDownload?: (reference: string) => Promise<{ url?: string; error?: string }>;
-};
-
-const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
 const serviceLabels: Record<string, string> = {
   product_listing: 'Publication d’annonce',
   banner_ad: 'Publicité bannière',
@@ -38,8 +32,6 @@ export const PaymentReturnPage: React.FC = () => {
   const [payment, setPayment] = useState<PaymentReturnResult | null>(null);
   const [message, setMessage] = useState('');
   const [checking, setChecking] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState('');
 
   const checkPayment = useCallback(async (manual = false) => {
     if (!reference || checking) return;
@@ -91,19 +83,6 @@ export const PaymentReturnPage: React.FC = () => {
     setChecking(true);
     const result = await retryMonerooPayment(reference);
     setChecking(false);
-    if (result.data?.type === 'book_purchase') {
-      try {
-        const stored: unknown = JSON.parse(localStorage.getItem('zando_digital_purchases') || '[]');
-        const purchases = Array.isArray(stored) ? stored : [];
-        const previous = purchases.find(item => item && typeof item === 'object' && item.reference === reference) as { productId?: string } | undefined;
-        localStorage.setItem('zando_digital_purchases', JSON.stringify([
-          ...purchases.filter(item => item && typeof item === 'object' && item.reference !== result.data?.reference),
-          { reference: result.data.reference, productId: previous?.productId }
-        ].slice(-50)));
-      } catch {
-        // The retry remains usable if local browser storage is unavailable.
-      }
-    }
     if (result.data?.checkout_url) {
       window.location.assign(result.data.checkout_url);
       return;
@@ -119,27 +98,6 @@ export const PaymentReturnPage: React.FC = () => {
     }
   };
 
-  const handleDigitalDownload = async () => {
-    if (state !== 'completed' || payment?.type !== 'book_purchase' || !payment.reference || downloading) return;
-    setDownloading(true);
-    setDownloadError('');
-    try {
-      if (!digitalBooksApi.getDigitalDownload) {
-        setDownloadError('Le téléchargement du livre numérique n’est pas encore disponible.');
-        return;
-      }
-      const result = await digitalBooksApi.getDigitalDownload(payment.reference);
-      if (result.url) {
-        window.location.assign(result.url);
-        return;
-      }
-      setDownloadError(result.error || 'Le lien de téléchargement n’a pas pu être généré.');
-    } catch {
-      setDownloadError('Impossible de préparer le téléchargement du livre pour le moment.');
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   const Icon = state === 'completed' ? CheckCircle2
     : state === 'failed' ? XCircle
@@ -168,15 +126,6 @@ export const PaymentReturnPage: React.FC = () => {
             {payment.created_at && <div className="flex justify-between gap-4"><span className="text-muted-foreground">Date</span><span>{new Date(payment.created_at).toLocaleString('fr-FR')}</span></div>}
             <div className="flex justify-between gap-4"><span className="text-muted-foreground">Référence</span><span className="font-mono text-xs break-all">{payment.reference}</span></div>
             <div className="flex justify-between gap-4"><span className="text-muted-foreground">Statut</span><strong>{statusText[state]}</strong></div>
-          </div>
-        )}
-        {state === 'completed' && payment?.type === 'book_purchase' && (
-          <div className="space-y-2">
-            <Button onClick={() => void handleDigitalDownload()} disabled={downloading} className="rounded-full gap-2">
-              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {downloading ? 'Préparation du téléchargement...' : 'Télécharger le livre'}
-            </Button>
-            {downloadError && <p className="text-sm text-rose-600 dark:text-rose-400">{downloadError}</p>}
           </div>
         )}
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">

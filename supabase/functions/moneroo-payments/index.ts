@@ -329,7 +329,7 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
     const type = body.serviceType;
     const itemId = body.itemId;
     const customer = body.customer;
-    if (!['product_listing', 'banner_ad', 'subscription', 'book_purchase'].includes(String(type)) || typeof itemId !== 'string' || itemId.length > 80) {
+    if (!['product_listing', 'banner_ad', 'subscription'].includes(String(type)) || typeof itemId !== 'string' || itemId.length > 80) {
       throw new Error('invalid_service_reference');
     }
     if (!customer || typeof customer !== 'object' || Array.isArray(customer)) throw new Error('invalid_customer');
@@ -340,6 +340,8 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
       p_default_currency: DEFAULT_CURRENCY,
     });
   }
+
+  if (txData.type === 'book_purchase') throw new Error('digital_book_sales_disabled');
 
   const reference = String(txData.reference ?? '');
   if (!validReference(reference)) throw new Error('invalid_payment_reference');

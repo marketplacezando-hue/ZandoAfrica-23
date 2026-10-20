@@ -95,7 +95,7 @@ export const AdminSettings: React.FC = () => {
     setSubscriptionPlans(settings.subscription_plans?.length ? settings.subscription_plans : defaultPlans);
     setAboutContent(settings.about_content || aboutDefault);
     setSecurityContent(settings.security_content || securityDefault);
-    setDigitalPdfMaxMiB(Math.min(20, Math.max(1, settings.digital_pdf_max_bytes / (1024 * 1024))));
+    setDigitalPdfMaxMiB(Math.min(300, Math.max(1, settings.digital_pdf_max_bytes / (1024 * 1024))));
   }, [settings]);
 
   const loadDigitalBookEvents = async () => {
@@ -130,8 +130,8 @@ export const AdminSettings: React.FC = () => {
       toast.error('Vérifiez les limites et les durées des abonnements (durées uniques de 1 à 3 mois).');
       return;
     }
-    if (!Number.isFinite(digitalPdfMaxMiB) || digitalPdfMaxMiB < 1 || digitalPdfMaxMiB > 20) {
-      toast.error('La taille maximale du PDF doit être comprise entre 1 et 20 Mio.');
+    if (!Number.isFinite(digitalPdfMaxMiB) || digitalPdfMaxMiB < 1 || digitalPdfMaxMiB > 300) {
+      toast.error('La taille maximale du PDF doit être comprise entre 1 et 300 Mio.');
       return;
     }
 
@@ -248,10 +248,10 @@ export const AdminSettings: React.FC = () => {
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xs">
         <h2 className="flex items-center gap-2 font-extrabold"><FileText className="h-5 w-5 text-primary" />Limite des livres numériques</h2>
-        <p className="text-xs text-muted-foreground">La limite du serveur s’applique à l’original et prévaut sur le contrôle du navigateur. Maximum technique actuel : 20 Mio.</p>
+        <p className="text-xs text-muted-foreground">La limite du serveur s’applique à l’original et prévaut sur le contrôle du navigateur. Maximum technique actuel : 300 Mio.</p>
         <label className="block max-w-xs space-y-2 text-xs font-bold">
           <span>Taille maximale du PDF (Mio)</span>
-          <Input type="number" min="1" max="20" step="1" value={digitalPdfMaxMiB} onChange={event => setDigitalPdfMaxMiB(Number(event.target.value))} aria-label="Taille maximale d’un livre PDF en Mio" />
+          <Input type="number" min="1" max="300" step="1" value={digitalPdfMaxMiB} onChange={event => setDigitalPdfMaxMiB(Number(event.target.value))} aria-label="Taille maximale d’un livre PDF en Mio" />
         </label>
       </section>
 

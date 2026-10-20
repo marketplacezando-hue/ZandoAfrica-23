@@ -39,7 +39,7 @@ async function allowedUpload(req,env) {
   const n=Number(await env.UPLOAD_RATES.get(key)||'0'); if(n>=20) return false;
   await env.UPLOAD_RATES.put(key,String(n+1),{expirationTtl:7200}); return true;
 }
-const DIGITAL_MAX_BYTES=20*1024*1024;
+const DIGITAL_MAX_BYTES=300*1024*1024;
 const DIGITAL_KEY=/^digital\/(originals|previews)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.pdf$/;
 function constantTimeEqual(a,b) {
   const aa=new TextEncoder().encode(a), bb=new TextEncoder().encode(b), length=Math.max(aa.length,bb.length);
@@ -72,11 +72,11 @@ async function digitalRateLimit(req,env) {
   let body;
   try { body=await req.json(); } catch { return digitalJson({error:'Invalid request'},400); }
   const scope=body?.scope, ip=typeof body?.client_ip==='string'?body.client_ip.trim().toLowerCase():'';
-  if(!['upload','preview','create_purchase','download'].includes(scope)||ip.length<2||ip.length>100||/[\r\n]/.test(ip)) return digitalJson({error:'Invalid rate-limit identity'},400);
+  if(!['upload','preview'].includes(scope)||ip.length<2||ip.length>100||/[\r\n]/.test(ip)) return digitalJson({error:'Invalid rate-limit identity'},400);
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ip));
   const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('').slice(0,32);
   const hour=Math.floor(Date.now()/3600000), key=`digital:${scope}:${hash}:${hour}`;
-  const limits={upload:8,preview:90,create_purchase:30,download:30};
+  const limits={upload:8,preview:90};
   const count=Number(await env.UPLOAD_RATES.get(key)||'0');
   const maximum=limits[scope];
   if(count>=maximum) {

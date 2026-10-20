@@ -85,7 +85,7 @@ export const zandoApi = {
       site_mode: (settingsMap.site_mode as { mode: 'free' | 'paid' }) || { mode: 'paid' },
       digital_pdf_max_bytes: Number.isInteger(settingsMap.digital_pdf_max_bytes) && Number(settingsMap.digital_pdf_max_bytes) > 0
         ? Number(settingsMap.digital_pdf_max_bytes)
-        : 20 * 1024 * 1024,
+        : 300 * 1024 * 1024,
       theme: { ...defaultTheme, ...((settingsMap.theme as Partial<PlatformSettings['theme']>) || {}) },
       pricing_durations: (settingsMap.pricing_durations as PlatformSettings['pricing_durations']) || [
         { days: 30, price: 1000, currency: 'FCFA', label: '1 mois' },

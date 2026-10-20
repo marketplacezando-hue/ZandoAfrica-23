@@ -4,7 +4,8 @@ vi.mock('@/db/supabase', () => ({
   supabase: { auth: { getSession: vi.fn() } }
 }));
 
-import { validateDigitalBookFile } from '@/services/digitalBooks';
+import { DIGITAL_BOOK_MAX_BYTES, validateDigitalBookFile } from '@/services/digitalBooks';
+import { isValidMerchantUrl } from '@/lib/digitalProducts';
 
 const signature = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 
@@ -33,5 +34,17 @@ describe('validateDigitalBookFile', () => {
     const oversized = new Uint8Array(1025);
     oversized.set(signature);
     await expect(validateDigitalBookFile(pdfFile('large.pdf', 'application/pdf', oversized), 1024)).resolves.toContain('limite configurée');
+  });
+});
+
+describe('digital product safety rules', () => {
+  it('uses the 300 MiB maximum configured for digital PDFs', () => {
+    expect(DIGITAL_BOOK_MAX_BYTES).toBe(300 * 1024 * 1024);
+  });
+  it('accepts HTTP/HTTPS merchant URLs and rejects dangerous schemes', () => {
+    expect(isValidMerchantUrl('https://seller.example/book')).toBe(true);
+    expect(isValidMerchantUrl('http://seller.example/book')).toBe(true);
+    expect(isValidMerchantUrl('javascript:alert(1)')).toBe(false);
+    expect(isValidMerchantUrl('https://user:pass@seller.example/book')).toBe(false);
   });
 });

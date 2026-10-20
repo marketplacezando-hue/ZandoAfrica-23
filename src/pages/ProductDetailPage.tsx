@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import * as digitalBooks from '@/services/digitalBooks';
-import { createMonerooPayment } from '@/services/monerooPayments';
 import { supabase } from '@/db/supabase';
 import type { Product, ProductReview } from '@/types/zando';
 import {
@@ -31,8 +30,7 @@ import {
   User,
   Plus,
   BookOpen,
-  Loader2,
-  CreditCard
+  Loader2
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { CountryFlag } from '@/components/common/CountryFlag';
@@ -47,34 +45,12 @@ import {
   DialogDescription
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-
-type DigitalBookCustomer = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  country_code?: string;
-};
+import { isValidMerchantUrl } from '@/lib/digitalProducts';
 
 type DigitalBooksApi = {
   getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
-  createDigitalPurchase?: (productId: string, customer: DigitalBookCustomer) => Promise<{ purchaseId?: string; error?: string }>;
-  getDigitalDownload?: (reference: string) => Promise<{ url?: string; error?: string }>;
 };
-
-type DigitalPaymentResponse = {
-  data: { reference?: string; checkout_url?: string | null } | null;
-  error?: string;
-};
-
-// The digital-book service and Moneroo type unions may land separately from this UI.
-// Keep the boundary typed locally without inventing public URLs or weakening the form data.
 const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
-const createDigitalBookPayment = createMonerooPayment as unknown as (input: {
-  serviceType: 'book_purchase';
-  itemId: string;
-  customer: DigitalBookCustomer;
-}) => Promise<DigitalPaymentResponse>;
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -110,11 +86,6 @@ export const ProductDetailPage: React.FC = () => {
   const [previewTotalPages, setPreviewTotalPages] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [digitalFirstName, setDigitalFirstName] = useState('');
-  const [digitalLastName, setDigitalLastName] = useState('');
-  const [digitalEmail, setDigitalEmail] = useState('');
-  const [digitalPhone, setDigitalPhone] = useState('');
-  const [digitalPurchaseLoading, setDigitalPurchaseLoading] = useState(false);
 
   // Support glissement tactile (swipe gauche/droite) pour la galerie photos (Étape 7)
   const touchStartXRef = useRef<number>(0);
@@ -333,7 +304,7 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleMerchantSiteClick = () => {
-    if (merchantLink) {
+    if (merchantLink && isValidMerchantUrl(merchantLink)) {
       zandoApi.trackEvent({
         event_type: 'merchant_click',
         item_id: product.id,
@@ -364,71 +335,6 @@ export const ProductDetailPage: React.FC = () => {
       setPreviewError('Impossible de charger l’aperçu du livre pour le moment.');
     } finally {
       setPreviewLoading(false);
-    }
-  };
-
-  const handleDigitalPurchase = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const firstName = digitalFirstName.trim();
-    const lastName = digitalLastName.trim();
-    const email = digitalEmail.trim();
-    const phone = digitalPhone.trim();
-    if (!firstName || !lastName || !email) {
-      toast.error('Veuillez renseigner votre prénom, votre nom et votre email.');
-      return;
-    }
-
-    const customer: DigitalBookCustomer = {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      ...(selectedCountry?.id ? { country_code: selectedCountry.id.toUpperCase() } : {}),
-      ...(phone ? { phone } : {})
-    };
-
-    setDigitalPurchaseLoading(true);
-    try {
-      if (!digitalBooksApi.createDigitalPurchase) {
-        toast.error('L’achat de livres numériques n’est pas encore disponible.');
-        return;
-      }
-      const purchase = await digitalBooksApi.createDigitalPurchase(product.id, customer);
-      if (!purchase.purchaseId) {
-        toast.error(purchase.error || 'Impossible d’enregistrer votre achat.');
-        return;
-      }
-
-      const payment = await createDigitalBookPayment({
-        serviceType: 'book_purchase',
-        itemId: purchase.purchaseId,
-        customer
-      });
-      const reference = payment.data?.reference;
-      if (!reference) {
-        toast.error(payment.error || 'Le paiement est indisponible. Votre demande reste en attente.');
-        return;
-      }
-
-      try {
-        const stored = JSON.parse(localStorage.getItem('zando_digital_purchases') || '[]');
-        const purchases = Array.isArray(stored) ? stored : [];
-        localStorage.setItem('zando_digital_purchases', JSON.stringify([
-          ...purchases.filter(item => item && typeof item === 'object' && item.reference !== reference),
-          { reference, purchaseId: purchase.purchaseId, productId: product.id }
-        ]));
-      } catch {
-        // Checkout remains usable when browser storage is unavailable.
-      }
-
-      if (payment.data?.checkout_url) {
-        window.location.assign(payment.data.checkout_url);
-        return;
-      }
-      navigate(`/paiement/resultat?reference=${encodeURIComponent(reference)}`);
-    } catch {
-      toast.error('Impossible de démarrer l’achat pour le moment.');
-    } finally {
-      setDigitalPurchaseLoading(false);
     }
   };
 
@@ -768,15 +674,15 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Message d'avertissement : le parcours digital ne promet aucun moyen externe. */}
+            {/* 2. Transparence du parcours digital. */}
             {product.category_id === 'digital-products' ? (
-              <div className="p-4 rounded-2xl border-2 border-amber-600/50 bg-amber-500/10 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 space-y-2 shadow-xs">
-                <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
-                  <span className="uppercase tracking-wide">Avertissement pour produit numérique</span>
+              <div className="p-4 rounded-2xl border-2 border-primary/30 bg-primary/5 text-foreground space-y-2 shadow-xs">
+                <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-primary">
+                  <BookOpen className="w-5 h-5 shrink-0" />
+                  <span className="uppercase tracking-wide">Aperçu gratuit et achat externe</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed text-amber-950/90 dark:text-amber-100/90">
-                  Achetez votre livre numérique en toute confiance ! Le livre est disponible au format PDF. Vous pouvez consulter gratuitement un aperçu des cinq premières pages avant votre achat. Après confirmation du paiement par le prestataire, vous pourrez accéder au livre complet et le télécharger selon les modalités prévues par la plateforme. Les moyens de paiement effectivement disponibles sont ceux affichés dans le checkout sécurisé Moneroo pour votre pays. Pour acheter le livre complet, utilisez le bouton « Acheter sur le site marchand » ci-dessous. En cas de difficulté de paiement ou de téléchargement, contactez le service d’assistance de la plateforme.
+                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                  Consultez gratuitement les 10 premières pages. ZandoAfrica ne vend pas ce livre, n’encaisse pas son prix et ne fournit pas le PDF complet. L’achat s’effectue uniquement sur le site marchand du vendeur.
                 </p>
               </div>
             ) : (
@@ -803,38 +709,18 @@ export const ProductDetailPage: React.FC = () => {
                     className="w-full h-11 rounded-2xl font-bold text-sm gap-2 cursor-pointer"
                   >
                     {previewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
-                    <span>{previewLoading ? 'Chargement de l’aperçu...' : 'Voir le produit'}</span>
+                    <span>{previewLoading ? 'Chargement de l’aperçu...' : 'Consulter l’aperçu gratuit'}</span>
                   </Button>
                   {previewError && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{previewError}</p>}
-
-                  <form onSubmit={handleDigitalPurchase} className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <ShoppingBag className="w-4 h-4 text-primary" />
-                      <h3 className="text-sm font-extrabold text-foreground">Acheter ce livre sur ZandoAfrica</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label htmlFor="digital-first-name" className="text-xs font-semibold text-foreground">Prénom *</label>
-                        <Input id="digital-first-name" value={digitalFirstName} onChange={e => setDigitalFirstName(e.target.value)} required className="h-9 text-xs" autoComplete="given-name" />
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="digital-last-name" className="text-xs font-semibold text-foreground">Nom *</label>
-                        <Input id="digital-last-name" value={digitalLastName} onChange={e => setDigitalLastName(e.target.value)} required className="h-9 text-xs" autoComplete="family-name" />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <label htmlFor="digital-email" className="text-xs font-semibold text-foreground">Email *</label>
-                      <Input id="digital-email" type="email" value={digitalEmail} onChange={e => setDigitalEmail(e.target.value)} required className="h-9 text-xs" autoComplete="email" />
-                    </div>
-                    <div className="space-y-1">
-                      <label htmlFor="digital-phone" className="text-xs font-semibold text-foreground">Téléphone <span className="font-normal text-muted-foreground">(si demandé par Moneroo)</span></label>
-                      <Input id="digital-phone" type="tel" value={digitalPhone} onChange={e => setDigitalPhone(e.target.value)} className="h-9 text-xs" autoComplete="tel" />
-                    </div>
-                    <Button type="submit" disabled={digitalPurchaseLoading} className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-sm gap-2 cursor-pointer">
-                      {digitalPurchaseLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                      {digitalPurchaseLoading ? 'Préparation du paiement...' : 'Acheter sur le site marchand'}
+                  {isValidMerchantUrl(merchantLink || '') ? (
+                    <Button type="button" onClick={handleMerchantSiteClick} className="w-full h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-sm sm:text-base gap-2 shadow-md cursor-pointer">
+                      <ShoppingBag className="w-5 h-5 shrink-0" />
+                      <span className="truncate">Acheter vers le site marchand</span>
+                      <ExternalLink className="w-4 h-4 ml-1 shrink-0" />
                     </Button>
-                  </form>
+                  ) : (
+                    <p className="text-xs text-rose-600 dark:text-rose-400 text-center">Le lien marchand de cette annonce est indisponible.</p>
+                  )}
                 </div>
               ) : merchantLink && (
                 <div className="space-y-1">
@@ -942,7 +828,7 @@ export const ProductDetailPage: React.FC = () => {
               <span>Aperçu du livre</span>
             </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(5, previewTotalPages)} première${Math.min(5, previewTotalPages) > 1 ? 's' : ''} page${Math.min(5, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les cinq premières pages du livre sont consultables gratuitement.'}
+                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(10, previewTotalPages)} première${Math.min(10, previewTotalPages) > 1 ? 's' : ''} page${Math.min(10, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les dix premières pages du livre sont consultables gratuitement.'}
                     </DialogDescription>
           </DialogHeader>
           <div className="w-full aspect-[3/4] sm:aspect-[4/3] rounded-xl overflow-hidden border bg-muted">

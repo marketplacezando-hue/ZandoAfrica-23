@@ -15,7 +15,6 @@ import { SubscriptionPage } from '@/pages/SubscriptionPage';
 import { PaymentReturnPage } from '@/pages/PaymentReturnPage';
 import { VerifyCodePage } from '@/pages/VerifyCodePage';
 import { FavoritesPage } from '@/pages/FavoritesPage';
-import { DigitalPurchasesPage } from '@/pages/DigitalPurchasesPage';
 import { AboutPage } from '@/pages/AboutPage';
 
 // Admin
@@ -50,7 +49,6 @@ const App: React.FC = () => {
               <Route path="/paiement/resultat" element={<PublicLayout><PaymentReturnPage /></PublicLayout>} />
               <Route path="/verifier-code" element={<PublicLayout><VerifyCodePage /></PublicLayout>} />
               <Route path="/favoris" element={<PublicLayout><FavoritesPage /></PublicLayout>} />
-              <Route path="/mes-achats" element={<PublicLayout><DigitalPurchasesPage /></PublicLayout>} />
               <Route path="/a-propos" element={<PublicLayout><AboutPage /></PublicLayout>} />
 
               {/* Admin Portal Nested Routes */}
