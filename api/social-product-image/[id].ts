@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+
 type ProductRow = {
   photos?: string[] | null;
   status?: string | null;
@@ -64,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .setHeader('Content-Length', String(bytes.byteLength))
       .setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800')
       .setHeader('X-Content-Type-Options', 'nosniff')
-      .send(bytes);
+      .send(Buffer.from(bytes));
   } catch (error) {
     console.error('Social image proxy failed', error);
     if (sourceUrl !== BRAND_LOGO) {
@@ -76,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .setHeader('Content-Type', fallback.headers.get('content-type') || 'image/png')
           .setHeader('Content-Length', String(bytes.byteLength))
           .setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800')
-          .send(bytes);
+          .send(Buffer.from(bytes));
         return;
       } catch {
         // Fall through to the explicit error below.
