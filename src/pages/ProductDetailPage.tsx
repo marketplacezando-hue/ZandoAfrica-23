@@ -49,6 +49,7 @@ import {
 import { toast } from 'sonner';
 import { isValidMerchantUrl } from '@/lib/digitalProducts';
 import { PaymentLogosMarquee } from '@/components/public/PaymentLogosMarquee';
+import { updateProductSocialMeta } from '@/lib/socialMeta';
 
 type DigitalBooksApi = {
   getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
@@ -253,6 +254,10 @@ export const ProductDetailPage: React.FC = () => {
 
     fetchDetail();
   }, [id]);
+
+  useEffect(() => {
+    if (product) updateProductSocialMeta(product);
+  }, [product]);
 
   // Synchronisation en temps réel via Supabase Realtime pour la fiche produit et les avis
   useEffect(() => {
