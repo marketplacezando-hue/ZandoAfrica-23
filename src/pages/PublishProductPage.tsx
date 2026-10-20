@@ -765,11 +765,11 @@ export const PublishProductPage: React.FC = () => {
             </div>}
 
             {/* Navigation buttons */}
-            <div className="pt-4 flex items-center justify-between border-t">
+            <div className="pt-4 flex flex-col-reverse gap-3 border-t sm:flex-row sm:items-center sm:justify-between">
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep(1)}
-                className="h-11 px-6 rounded-full font-semibold gap-2"
+                className="h-11 w-full rounded-full px-6 font-semibold gap-2 sm:w-auto"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Retour</span>
@@ -779,10 +779,10 @@ export const PublishProductPage: React.FC = () => {
                 onClick={() => {
                   if (validateStep2()) setCurrentStep(3);
                 }}
-                className="h-11 px-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 cursor-pointer shadow-xs"
+                className="h-auto min-h-11 w-full min-w-0 max-w-full whitespace-normal break-words rounded-full bg-primary px-3 py-2 text-sm font-bold leading-tight text-primary-foreground hover:bg-primary/90 gap-2 cursor-pointer shadow-xs sm:w-auto sm:px-8 sm:text-base"
               >
-                <span>Choisir la durée & tarif</span>
-                <ChevronRight className="w-4 h-4" />
+                <span className="min-w-0 whitespace-normal break-words text-center leading-tight">Choisir la durée & tarif</span>
+                <ChevronRight className="w-4 h-4 shrink-0" />
               </Button>
             </div>
           </div>
