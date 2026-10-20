@@ -5,7 +5,6 @@ import { BRAND_ASSETS } from '@/constants/brand';
 import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { CountryFlag } from '@/components/common/CountryFlag';
 import { countryCodeToFlag } from '@/lib/locale';
-import { DISPLAY_CURRENCIES } from '@/lib/currency';
 import {
   Menu,
   X,
@@ -44,8 +43,6 @@ export const PublicHeader: React.FC = () => {
     countries,
     selectedCountry,
     setSelectedCountry,
-    selectedCurrency,
-    setSelectedCurrency,
     visitorCountry,
     favorites,
     loginAdmin
@@ -116,7 +113,7 @@ export const PublicHeader: React.FC = () => {
             />
           </Link>
 
-          {/* Center / Country & Currency Dropdowns (Sober original style without extra frames - Requirement 1) */}
+          {/* Sélecteur de pays */}
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Country Selector */}
             <DropdownMenu>
@@ -147,17 +144,6 @@ export const PublicHeader: React.FC = () => {
                     <span className="text-xs text-muted-foreground">{c.currency}</span>
                   </DropdownMenuItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-bold text-foreground" aria-label="Choisir la devise d’affichage">
-                  <span>{selectedCurrency}</span><ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-36 p-1">
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Devise d’affichage</div>
-                {DISPLAY_CURRENCIES.map(currency => <DropdownMenuItem key={currency} onClick={() => setSelectedCurrency(currency)} className="cursor-pointer">{currency}</DropdownMenuItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
