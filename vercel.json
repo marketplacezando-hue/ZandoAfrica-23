@@ -7,7 +7,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(facebookexternalhit|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Pinterest|Slackbot|Discordbot|Googlebot|bingbot|Applebot)"
+          "value": ".*(facebookexternalhit|FacebookExternalHit|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Pinterest|Slackbot|Discordbot|Googlebot|bingbot|Applebot).*"
         }
       ],
       "destination": "/api/social-product/:id"
