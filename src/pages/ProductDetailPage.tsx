@@ -762,7 +762,7 @@ export const ProductDetailPage: React.FC = () => {
                   <span className="uppercase tracking-wide">Aperçu gratuit et achat externe</span>
                 </div>
                 <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  Consultez gratuitement les 10 premières pages. ZandoAfrica ne vend pas ce livre, n’encaisse pas son prix et ne fournit pas le PDF complet. L’achat s’effectue uniquement sur le site marchand du vendeur.
+                  Consultez gratuitement les 10 premières pages du livre. Le livre complet est téléchargeable après paiement. L’achat s’effectue exclusivement sur le site marchand du vendeur, en cliquant sur le bouton orange « Acheter vers le site marchand ».
                 </p>
               </div>
             ) : (
