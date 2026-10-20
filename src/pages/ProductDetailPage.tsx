@@ -356,6 +356,11 @@ export const ProductDetailPage: React.FC = () => {
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
     window.open(facebookShareUrl, '_blank', 'noopener,noreferrer,width=620,height=520');
   };
+  const handleWhatsAppShare = () => {
+    const message = `${product.title}\n${window.location.href}`;
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(whatsappShareUrl, '_blank', 'noopener,noreferrer,width=620,height=620');
+  };
 
   // Requirement 5: Do NOT display seller phone in plain text on the page
   const handleCall = () => {
@@ -595,7 +600,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
             
             {/* Country and location header matching Image 1 */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
+            <div className="flex flex-col gap-3 text-xs text-muted-foreground">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
                   <CountryFlag countryId={product.countries?.id || product.country_id} className="h-[18px] w-[27px]" />
@@ -611,7 +616,7 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="self-end flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleShare}
@@ -631,6 +636,15 @@ export const ProductDetailPage: React.FC = () => {
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
                     <path d="M14 8h3V4h-3c-3.314 0-5 1.686-5 5v3H6v4h3v8h4v-8h3.2l.8-4H13V9c0-.552.448-1 1-1Z" />
                   </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm transition-colors hover:bg-[#1ebe5d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 cursor-pointer"
+                  title="Partager sur WhatsApp"
+                  aria-label="Partager l'annonce sur WhatsApp"
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
