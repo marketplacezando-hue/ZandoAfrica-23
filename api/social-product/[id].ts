@@ -69,12 +69,19 @@ function renderSocialHtml(product: ProductSocialData | null, productId: string, 
 <meta property="og:description" content="${safeDescription}">
 <meta property="og:url" content="${safePageUrl}">
 <meta property="og:image" content="${safeImage}">
+<meta property="og:image:url" content="${safeImage}">
 <meta property="og:image:secure_url" content="${safeImage}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="1536">
 <meta property="og:image:alt" content="${escapeHtml(isProduct ? product?.title : 'Logo Zando Africa')}">
+<meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="${safePageUrl}">
 <meta name="twitter:title" content="${safeTitle}">
 <meta name="twitter:description" content="${safeDescription}">
 <meta name="twitter:image" content="${safeImage}">
+<meta name="twitter:image:alt" content="${escapeHtml(isProduct ? product?.title : 'Logo Zando Africa')}">
 <meta http-equiv="refresh" content="0;url=${safePageUrl}">
 </head>
 <body><p><a href="${safePageUrl}">Ouvrir sur Zando Africa</a></p></body>
