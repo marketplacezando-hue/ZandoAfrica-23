@@ -17,9 +17,9 @@ export const PaymentLogosMarquee: React.FC = () => {
     <div className="w-full h-11 sm:h-12 rounded-2xl border border-border/80 bg-muted/30 overflow-hidden" aria-label="Moyens de paiement proposés selon le pays">
       <div className="flex h-full w-max items-center motion-safe:animate-[payment-marquee_28s_linear_infinite] motion-reduce:translate-x-0">
         {logos.map((logo, index) => (
-          <div key={`${logo.name}-${index}`} className="mx-2.5 flex h-8 min-w-[74px] items-center justify-center rounded-lg bg-white px-2 shadow-xs dark:bg-slate-950" title={`${logo.name} — disponibilité selon le pays`}>
-            <img src={logo.file} alt={logo.name} className="max-h-6 max-w-[64px] object-contain" loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />
-            <span className="sr-only">{logo.name}</span>
+          <div key={`${logo.name}-${index}`} className="mx-2 flex h-8 min-w-[112px] items-center justify-center gap-2 rounded-lg bg-white px-2 shadow-xs dark:bg-slate-950" title={`${logo.name} — disponibilité selon le pays`}>
+            <img src={logo.file} alt="" aria-hidden="true" className="max-h-5 max-w-[38px] shrink-0 object-contain" loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />
+            <span className="whitespace-nowrap text-[10px] font-extrabold leading-none text-slate-700 dark:text-slate-200">{logo.name}</span>
           </div>
         ))}
       </div>
