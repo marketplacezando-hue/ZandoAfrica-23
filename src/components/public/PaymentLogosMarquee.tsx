@@ -26,7 +26,7 @@ export const PaymentLogosMarquee: React.FC = () => {
       <div className="flex h-full w-max items-center motion-safe:animate-[payment-marquee_28s_linear_infinite] motion-reduce:translate-x-0">
         {logos.map((logo, index) => (
           <div key={`${logo.name}-${index}`} className="mx-2 flex h-8 min-w-[112px] items-center justify-center gap-2 rounded-lg bg-white px-2 shadow-xs dark:bg-slate-950" title={`${logo.name} — disponibilité selon le pays`}>
-            <img src={logo.file} alt="" aria-hidden="true" className={`${'imageClass' in logo ? logo.imageClass : 'max-h-5 max-w-[38px]'} shrink-0 object-contain`} loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />
+            <img src={logo.file} alt="" aria-hidden="true" className="h-7 w-[88px] shrink-0 object-contain" loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />
             {!('hasWordmark' in logo && logo.hasWordmark) && <span className="whitespace-nowrap text-[10px] font-extrabold leading-none text-slate-700 dark:text-slate-200">{logo.name}</span>}
           </div>
         ))}
