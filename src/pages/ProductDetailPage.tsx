@@ -335,6 +335,7 @@ export const ProductDetailPage: React.FC = () => {
     : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'];
 
   const merchantLink = product.merchant_url || product.external_url;
+  const productShareUrl = `https://zando-africa.vercel.app/produit/${encodeURIComponent(product.id)}`;
 
   const normalizedOptions: string[] = Array.isArray(product.options)
     ? product.options.flatMap(opt => {
@@ -347,17 +348,17 @@ export const ProductDetailPage: React.FC = () => {
     : [];
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(productShareUrl);
     setCopied(true);
     toast.success('Lien de l\'annonce copié dans le presse-papiers !');
     setTimeout(() => setCopied(false), 2000);
   };
   const handleFacebookShare = () => {
-    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productShareUrl)}`;
     window.open(facebookShareUrl, '_blank', 'noopener,noreferrer,width=620,height=520');
   };
   const handleWhatsAppShare = () => {
-    const message = `${product.title}\n${window.location.href}`;
+    const message = `${product.title}\n${productShareUrl}`;
     const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     window.open(whatsappShareUrl, '_blank', 'noopener,noreferrer,width=620,height=620');
   };
