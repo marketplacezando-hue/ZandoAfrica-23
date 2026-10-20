@@ -4,6 +4,8 @@ import { useZando } from '@/contexts/ZandoContext';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { CountryFlag } from '@/components/common/CountryFlag';
+import { countryCodeToFlag } from '@/lib/locale';
+import { DISPLAY_CURRENCIES } from '@/lib/currency';
 import {
   Menu,
   X,
@@ -44,6 +46,7 @@ export const PublicHeader: React.FC = () => {
     setSelectedCountry,
     selectedCurrency,
     setSelectedCurrency,
+    visitorCountry,
     favorites,
     loginAdmin
   } = useZando();
@@ -55,7 +58,8 @@ export const PublicHeader: React.FC = () => {
   const [adminLoading, setAdminLoading] = useState(false);
 
   const navigate = useNavigate();
-  const currencies = ['XAF', 'CDF', 'XOF'];
+  const displayCountryCode = visitorCountry?.code || selectedCountry?.id;
+  const displayCountryName = visitorCountry?.name || selectedCountry?.name || 'Pays';
 
   React.useEffect(() => {
     const showAdminLogin = () => setAdminModalOpen(true);
@@ -121,8 +125,8 @@ export const PublicHeader: React.FC = () => {
                   type="button"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer text-foreground"
                 >
-                  {selectedCountry ? <CountryFlag countryId={selectedCountry.id} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
-                  <span className="hidden sm:inline max-w-[120px] truncate text-foreground">{selectedCountry?.name || 'Pays'}</span>
+                  {visitorCountry ? <span className="text-base leading-none" aria-label={`Drapeau de ${visitorCountry.name}`}>{countryCodeToFlag(visitorCountry.code)}</span> : displayCountryCode ? <CountryFlag countryId={displayCountryCode} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
+                  <span className="hidden sm:inline max-w-[120px] truncate text-foreground">{displayCountryName}</span>
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
@@ -143,6 +147,17 @@ export const PublicHeader: React.FC = () => {
                     <span className="text-xs text-muted-foreground">{c.currency}</span>
                   </DropdownMenuItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-bold text-foreground" aria-label="Choisir la devise d’affichage">
+                  <span>{selectedCurrency}</span><ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36 p-1">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Devise d’affichage</div>
+                {DISPLAY_CURRENCIES.map(currency => <DropdownMenuItem key={currency} onClick={() => setSelectedCurrency(currency)} className="cursor-pointer">{currency}</DropdownMenuItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

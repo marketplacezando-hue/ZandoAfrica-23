@@ -83,6 +83,7 @@ export const zandoApi = {
 
     return {
       site_mode: (settingsMap.site_mode as { mode: 'free' | 'paid' }) || { mode: 'paid' },
+      default_display_currency: typeof settingsMap.default_display_currency === 'string' ? settingsMap.default_display_currency : 'FCFA',
       digital_pdf_max_bytes: Number.isInteger(settingsMap.digital_pdf_max_bytes) && Number(settingsMap.digital_pdf_max_bytes) > 0
         ? Number(settingsMap.digital_pdf_max_bytes)
         : 300 * 1024 * 1024,

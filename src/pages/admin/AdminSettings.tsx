@@ -71,6 +71,7 @@ const isHexColor = (value: string) => /^#[\da-f]{6}$/i.test(value);
 export const AdminSettings: React.FC = () => {
   const { settings, refreshSettings } = useZando();
   const [siteMode, setSiteMode] = useState<'free' | 'paid'>(settings.site_mode?.mode || 'paid');
+  const [defaultDisplayCurrency, setDefaultDisplayCurrency] = useState(settings.default_display_currency || 'FCFA');
   const [theme, setTheme] = useState<PlatformSettings['theme']>({ ...defaultTheme, ...settings.theme });
   const [durations, setDurations] = useState<PlatformSettings['pricing_durations']>(defaultDurations);
   const [adPricing, setAdPricing] = useState<PlatformSettings['ad_pricing']>(settings.ad_pricing || defaultAdPricing);
@@ -85,6 +86,7 @@ export const AdminSettings: React.FC = () => {
 
   useEffect(() => {
     setSiteMode(settings.site_mode?.mode || 'paid');
+    setDefaultDisplayCurrency(settings.default_display_currency || 'FCFA');
     setTheme({ ...defaultTheme, ...settings.theme });
     const configured = settings.pricing_durations?.filter(item => [30, 60, 90].includes(item.days)) || [];
     setDurations(configured.length === 3 ? configured : defaultDurations.map(item => ({
@@ -145,6 +147,7 @@ export const AdminSettings: React.FC = () => {
       }));
       const updates: Array<[string, unknown]> = [
         ['site_mode', { mode: siteMode }],
+        ['default_display_currency', defaultDisplayCurrency],
         ['pricing_durations', normalizedDurations],
         ['theme', { ...theme }],
         ['ad_pricing', adPricing.map(item => ({ ...item, currency: 'FCFA' }))],
@@ -210,6 +213,14 @@ export const AdminSettings: React.FC = () => {
             {siteMode === 'free' ? 'Gratuit' : 'Payant'}
           </button>
         </div>
+      </section>
+
+      <section className="space-y-3 rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <h2 className="flex items-center gap-2 font-extrabold"><DollarSign className="h-5 w-5 text-emerald-600" />Devise d’affichage par défaut</h2>
+        <p className="text-xs text-muted-foreground">Utilisée si la détection IP échoue. Le choix manuel du visiteur reste indépendant de son pays détecté.</p>
+        <select value={defaultDisplayCurrency} onChange={event => setDefaultDisplayCurrency(event.target.value)} className="h-10 w-full max-w-xs rounded-xl border border-input bg-background px-3 text-sm font-semibold">
+          <option value="FCFA">FCFA</option><option value="CDF">CDF</option><option value="EUR">EUR</option><option value="USD">USD</option>
+        </select>
       </section>
 
       <section className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-xs">

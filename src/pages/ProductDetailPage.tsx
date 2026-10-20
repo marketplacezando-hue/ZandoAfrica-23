@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { isValidMerchantUrl } from '@/lib/digitalProducts';
+import { PaymentLogosMarquee } from '@/components/public/PaymentLogosMarquee';
 
 type DigitalBooksApi = {
   getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
@@ -151,16 +152,13 @@ const PdfPreviewReader: React.FC<{ blobUrl: string; maxPages?: number }> = ({ bl
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isFavorite, toggleFavorite, selectedCurrency, selectedCountry } = useZando();
+  const { isFavorite, toggleFavorite, selectedCurrency, setSelectedCurrency, selectedCountry, formatPrice } = useZando();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [copied, setCopied] = useState(false);
-
-  // Currency Converter Selector (like in Image 1: FCFA, CDF, EUR, USD)
-  const [displayCurrency, setDisplayCurrency] = useState<string>('FCFA');
 
   // Selected Variant Option
   const [selectedOption, setSelectedOption] = useState<string>('');
@@ -220,8 +218,6 @@ export const ProductDetailPage: React.FC = () => {
         const item = await zandoApi.getProductById(id);
         if (item) {
           setProduct(item);
-          setDisplayCurrency(item.currency || 'FCFA');
-
           // Initialize selected option if options exist
           if (item.options && item.options.length > 0) {
             const firstOpt = typeof item.options[0] === 'string'
@@ -321,24 +317,7 @@ export const ProductDetailPage: React.FC = () => {
   const favorited = isFavorite(product.id);
   const basePrice = Number(product.price);
 
-  // Currency conversion approximation
-  const convertPrice = (amount: number, from: string, to: string) => {
-    if (from === to) return amount;
-    // Base FCFA (XAF/XOF)
-    let inFcfa = amount;
-    if (from === 'CDF') inFcfa = amount * 0.23;
-    else if (from === 'EUR') inFcfa = amount * 655.957;
-    else if (from === 'USD') inFcfa = amount * 600;
-
-    if (to === 'FCFA' || to === 'XAF' || to === 'XOF') return inFcfa;
-    if (to === 'CDF') return inFcfa / 0.23;
-    if (to === 'EUR') return inFcfa / 655.957;
-    if (to === 'USD') return inFcfa / 600;
-    return amount;
-  };
-
-  const convertedAmount = Math.round(convertPrice(basePrice, product.currency, displayCurrency));
-  const formattedPrice = new Intl.NumberFormat('fr-FR').format(convertedAmount);
+  const formattedPrice = formatPrice(basePrice, product.currency);
   const originalFormatted = new Intl.NumberFormat('fr-FR').format(basePrice);
 
   const remainingDays = Math.max(
@@ -653,7 +632,7 @@ export const ProductDetailPage: React.FC = () => {
             {/* Price matching Image 1 (Bold red) */}
             <div className="space-y-3">
               <div className="text-3xl sm:text-4xl font-black text-red-600 tracking-tight">
-                {formattedPrice} {displayCurrency}
+                {formattedPrice}
               </div>
 
               {/* Currency Selector matching Image 1: FCFA, CDF, EUR, USD */}
@@ -664,9 +643,9 @@ export const ProductDetailPage: React.FC = () => {
                     <button
                       key={cur}
                       type="button"
-                      onClick={() => setDisplayCurrency(cur)}
+                      onClick={() => setSelectedCurrency(cur)}
                       className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                        displayCurrency === cur
+                        selectedCurrency === cur
                           ? 'bg-emerald-600 text-white shadow-xs'
                           : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                       }`}
@@ -797,6 +776,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="space-y-3 pt-1">
               {product.category_id === 'digital-products' ? (
                 <div className="space-y-3">
+                  <PaymentLogosMarquee />
                   <Button
                     type="button"
                     variant="outline"

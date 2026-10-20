@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
  * Automatically scrolls the window to the top on every route change (Requirement 8)
  */
 export const ScrollToTop: React.FC = () => {
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     window.scrollTo({
@@ -13,7 +13,7 @@ export const ScrollToTop: React.FC = () => {
       left: 0,
       behavior: 'instant'
     });
-  }, [pathname, search]);
+  }, [pathname]);
 
   return null;
 };

@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { createMonerooPayment } from '@/services/monerooPayments';
 
 export const BannerAdPage: React.FC = () => {
-  const { settings } = useZando();
+  const { settings, formatPrice } = useZando();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
@@ -290,7 +290,7 @@ export const BannerAdPage: React.FC = () => {
               >
                 <div className="font-bold text-sm text-foreground">{p.months} Mois</div>
                 <div className="text-base font-extrabold text-blue-600 mt-2">
-                  {new Intl.NumberFormat('fr-FR').format(p.price)} FCFA
+                  {formatPrice(p.price, p.currency)}
                 </div>
               </div>
             ))}

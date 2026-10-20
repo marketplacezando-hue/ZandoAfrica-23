@@ -18,7 +18,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   variant = 'latest',
   onProductClick
 }) => {
-  const { toggleFavorite, isFavorite, selectedCountry } = useZando();
+  const { toggleFavorite, isFavorite, selectedCountry, formatPrice } = useZando();
   const favorited = isFavorite(product.id);
 
   const isLocal = !selectedCountry || product.country_id === selectedCountry.id;
@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const mainPhoto = product.photos?.[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
 
   // Format price
-  const formattedPrice = new Intl.NumberFormat('fr-FR').format(product.price);
+  const formattedPrice = formatPrice(product.price, product.currency);
 
   // Compute remaining days
   const remainingDays = Math.max(
@@ -151,7 +151,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Price */}
           <div className="text-base sm:text-lg font-extrabold text-rose-600">
-            {formattedPrice} {product.currency}
+            {formattedPrice}
           </div>
 
           {/* Short description */}

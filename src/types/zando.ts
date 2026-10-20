@@ -166,6 +166,7 @@ export interface AdminAuditLog {
 
 export interface PlatformSettings {
   site_mode: { mode: 'free' | 'paid' };
+  default_display_currency: string;
   digital_pdf_max_bytes: number;
   theme: {
     primary_color: string;

@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { createMonerooPayment } from '@/services/monerooPayments';
 
 export const SubscriptionPage: React.FC = () => {
-  const { settings } = useZando();
+  const { settings, formatPrice } = useZando();
   const navigate = useNavigate();
 
   // Form State
@@ -219,7 +219,7 @@ export const SubscriptionPage: React.FC = () => {
                   <div className="text-[11px] text-muted-foreground">{plan.limit} annonces incluses</div>
                 </div>
                 <div className="text-base font-extrabold text-primary mt-3">
-                  {new Intl.NumberFormat('fr-FR').format(plan.price)} FCFA
+                  {formatPrice(plan.price, plan.currency)}
                 </div>
               </div>
             ))}
@@ -238,7 +238,7 @@ export const SubscriptionPage: React.FC = () => {
           </div>
           <div className="flex justify-between font-bold text-sm border-t pt-2 text-foreground">
             <span>Total :</span>
-            <span className="text-primary font-extrabold">{new Intl.NumberFormat('fr-FR').format(currentPlan.price)} FCFA</span>
+            <span className="text-primary font-extrabold">{formatPrice(currentPlan.price, currentPlan.currency)}</span>
           </div>
         </div>
 
