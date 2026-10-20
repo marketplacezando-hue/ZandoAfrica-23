@@ -25,7 +25,7 @@ import { CountrySelect } from '@/components/common/CountrySelect';
 import { createMonerooPayment } from '@/services/monerooPayments';
 import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
 import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
-import { normalizeProductCoverImage } from '@/lib/productImages';
+import { normalizeProductCoverImage, normalizeSellerAvatarImage } from '@/lib/productImages';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -170,10 +170,18 @@ export const PublishProductPage: React.FC = () => {
   // Seller Profile Photo Upload (Requirement 3)
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+    const originalFile = e.target.files[0];
     setUploadingAvatar(true);
     toast.info('Chargement de votre photo de profil...');
 
+    let file: File;
+    try {
+      file = await normalizeSellerAvatarImage(originalFile);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Ce format d’image ne peut pas être lu par le navigateur.');
+      setUploadingAvatar(false);
+      return;
+    }
     const result = await zandoApi.uploadMedia(file, 'avatars');
     if (result.url) {
       setSellerPhotoUrl(result.url);
@@ -633,7 +641,7 @@ export const PublishProductPage: React.FC = () => {
                     <span>Choisir ma photo de profil</span>
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept="image/*"
                       onChange={handleAvatarSelect}
                       className="hidden"
                       disabled={uploadingAvatar}

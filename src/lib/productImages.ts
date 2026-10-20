@@ -55,4 +55,23 @@ export async function normalizeProductCoverImage(file: File): Promise<File> {
   return new File([blob], `${baseName}-1024x1536.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
 }
 
+/** Convertit une photo de profil dans un format universel accepté par le stockage. */
+export async function normalizeSellerAvatarImage(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) throw new Error('Veuillez sélectionner un fichier image.');
+  const image = await loadImage(file);
+  const maxSide = 1200;
+  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Le traitement de la photo est indisponible sur cet appareil.');
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(result => result ? resolve(result) : reject(new Error('Impossible de préparer la photo.')), 'image/jpeg', 0.9);
+  });
+  const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo-vendeur';
+  return new File([blob], `${baseName}-avatar.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+}
+
 export const PRODUCT_COVER_DIMENSIONS = { width: COVER_WIDTH, height: COVER_HEIGHT } as const;
