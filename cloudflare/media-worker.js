@@ -1,6 +1,8 @@
 const ORIGINS = new Set([
   'https://marketplacezando-hue.github.io',
   'https://zando-africa.vercel.app',
+  'https://zando-africa-23.vercel.app',
+  'https://zando-africa-23-konolive23.vercel.app',
   'https://zando-africa-23-git-feat-moneroo-integration-konolive23.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
