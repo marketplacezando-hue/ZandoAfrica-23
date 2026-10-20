@@ -33,11 +33,6 @@ function escapeHtml(value: unknown): string {
     .replaceAll("'", '&#39;');
 }
 
-function absoluteUrl(value: string | undefined, siteUrl: string): string {
-  if (!value) return BRAND_LOGO;
-  try { return new URL(value, siteUrl).toString(); } catch { return BRAND_LOGO; }
-}
-
 function getSiteUrl(): string {
   const configured = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
   return configured ? `https://${configured.replace(/^https?:\/\//, '')}` : FALLBACK_SITE_URL;
@@ -49,7 +44,9 @@ function renderSocialHtml(product: ProductSocialData | null, productId: string, 
   const description = isProduct
     ? `${product?.description?.trim() || 'Découvrez cette annonce sur Zando Africa.'}${product?.seller_name ? ` — Vendeur : ${product.seller_name}.` : ''}`.slice(0, 240)
     : 'Achetez, vendez et évoluez avec Zando Africa, la marketplace panafricaine.';
-  const image = absoluteUrl(product?.photos?.[0], siteUrl);
+  const image = isProduct && product?.photos?.[0]
+    ? `${siteUrl}/api/social-product-image/${encodeURIComponent(productId)}`
+    : BRAND_LOGO;
   const pageUrl = `${siteUrl}/produit/${encodeURIComponent(productId)}`;
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
