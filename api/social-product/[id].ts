@@ -22,7 +22,7 @@ type VercelResponse = {
 declare const process: { env: Record<string, string | undefined> };
 
 const BRAND_LOGO = 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvyf87pc/app-f5tomiygsu81/20261017/1000500253.png';
-const FALLBACK_SITE_URL = 'https://zando-africa-23.vercel.app';
+const FALLBACK_SITE_URL = 'https://zando-africa.vercel.app';
 
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
