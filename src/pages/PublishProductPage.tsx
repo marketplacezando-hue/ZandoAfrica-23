@@ -24,7 +24,8 @@ import { toast } from 'sonner';
 import { CountrySelect } from '@/components/common/CountrySelect';
 import { createMonerooPayment } from '@/services/monerooPayments';
 import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
-import { isValidMerchantUrl } from '@/lib/digitalProducts';
+import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
+import { normalizeProductCoverImage } from '@/lib/productImages';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -122,7 +123,17 @@ export const PublishProductPage: React.FC = () => {
     setUploadingPhotos(true);
     const uploadedUrls: string[] = [];
 
-    for (const file of files) {
+    for (const [index, originalFile] of files.entries()) {
+      let file = originalFile;
+      if (photoUrls.length === 0 && index === 0) {
+        try {
+          file = await normalizeProductCoverImage(originalFile);
+          toast.info('La photo de couverture est adaptée au format portrait 1024 × 1536.');
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : 'La couverture n’a pas pu être préparée.');
+          continue;
+        }
+      }
       const result = await zandoApi.uploadMedia(file, 'products');
       if (result.url) {
         uploadedUrls.push(result.url);
@@ -238,10 +249,12 @@ export const PublishProductPage: React.FC = () => {
       toast.error('Veuillez renseigner un numéro WhatsApp valide.');
       return false;
     }
-    if (isDigitalProduct && !isValidMerchantUrl(externalUrl)) {
+    const normalizedMerchantUrl = normalizeMerchantUrl(externalUrl);
+    if (isDigitalProduct && !normalizedMerchantUrl) {
       toast.error('Veuillez renseigner un lien marchand HTTP ou HTTPS valide.');
       return false;
     }
+    if (normalizedMerchantUrl && normalizedMerchantUrl !== externalUrl.trim()) setExternalUrl(normalizedMerchantUrl);
     return true;
   };
 
@@ -318,8 +331,8 @@ export const PublishProductPage: React.FC = () => {
         seller_phone: fullPhone,
         seller_photo_url: sellerPhotoUrl || null,
         seller_avatar: sellerPhotoUrl || null,
-        external_url: externalUrl.trim() || null,
-        merchant_url: externalUrl.trim() || null,
+        external_url: normalizeMerchantUrl(externalUrl) || null,
+        merchant_url: normalizeMerchantUrl(externalUrl) || null,
         photos: photoUrls,
         video_url: isDigitalProduct ? null : videoUrl.trim() || null,
         ...(isDigitalProduct && digitalBookUploadToken
@@ -912,7 +925,7 @@ export const PublishProductPage: React.FC = () => {
             </div>
 
             {/* Action buttons */}
-            <div className="pt-4 flex items-center justify-between border-t">
+            <div className="pt-4 flex flex-wrap items-center justify-between gap-3 border-t">
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep(2)}
@@ -925,10 +938,10 @@ export const PublishProductPage: React.FC = () => {
               <Button
                 onClick={handleFinalPublish}
                 disabled={submitting}
-                className="h-12 px-8 rounded-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold gap-2 cursor-pointer shadow-md text-sm sm:text-base active:scale-95"
+                className="min-w-0 max-w-full min-h-12 h-auto px-4 py-3 sm:px-8 rounded-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold gap-2 justify-center cursor-pointer shadow-md text-sm sm:text-base text-center leading-tight whitespace-normal break-words active:scale-95"
               >
                 <CreditCard className="w-4 h-4" />
-                <span>{submitting ? 'Enregistrement...' : effectivePrice === 0 ? 'Publier gratuitement' : 'Payer et publier'}</span>
+                <span className="whitespace-normal break-words">{submitting ? 'Enregistrement...' : effectivePrice === 0 ? 'Publier gratuitement' : 'Payer et publier'}</span>
               </Button>
             </div>
           </div>

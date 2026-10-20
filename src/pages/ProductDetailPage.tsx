@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import * as digitalBooks from '@/services/digitalBooks';
@@ -51,6 +53,100 @@ type DigitalBooksApi = {
   getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
 };
 const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+const MAX_PREVIEW_PAGES = 10;
+
+const PdfPreviewReader: React.FC<{ blobUrl: string; maxPages?: number }> = ({ blobUrl, maxPages = MAX_PREVIEW_PAGES }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const readerRef = useRef<HTMLDivElement>(null);
+  const touchStartXRef = useRef(0);
+  const [documentProxy, setDocumentProxy] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageCount, setPageCount] = useState(0);
+  const [rendering, setRendering] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setRendering(true);
+    setPageNumber(1);
+    const loadingTask = pdfjsLib.getDocument(blobUrl);
+    void loadingTask.promise.then(pdf => {
+      if (!active) {
+        void pdf.destroy();
+        return;
+      }
+      setDocumentProxy(pdf);
+      setPageCount(Math.min(pdf.numPages, maxPages));
+    }).catch(() => {
+      if (active) setDocumentProxy(null);
+    });
+    return () => {
+      active = false;
+      void loadingTask.destroy();
+      setDocumentProxy(null);
+    };
+  }, [blobUrl, maxPages]);
+
+  useEffect(() => {
+    if (!documentProxy || !canvasRef.current || !readerRef.current) return;
+    let active = true;
+    setRendering(true);
+    void documentProxy.getPage(pageNumber).then(page => {
+      if (!active || !canvasRef.current || !readerRef.current) return;
+      const baseViewport = page.getViewport({ scale: 1 });
+      const availableWidth = Math.max(260, readerRef.current.clientWidth - 24);
+      const scale = availableWidth / baseViewport.width;
+      const viewport = page.getViewport({ scale });
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = canvasRef.current;
+      canvas.width = Math.ceil(viewport.width * pixelRatio);
+      canvas.height = Math.ceil(viewport.height * pixelRatio);
+      canvas.style.width = `${Math.ceil(viewport.width)}px`;
+      canvas.style.height = `${Math.ceil(viewport.height)}px`;
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      return page.render({ canvas, canvasContext: context, viewport }).promise;
+    }).finally(() => {
+      if (active) setRendering(false);
+    });
+    return () => { active = false; };
+  }, [documentProxy, pageNumber]);
+
+  const goToPage = (next: number) => setPageNumber(Math.max(1, Math.min(pageCount || 1, next)));
+  const handleTouchStart = (event: React.TouchEvent) => {
+    touchStartXRef.current = event.touches[0]?.clientX || 0;
+  };
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    const delta = touchStartXRef.current - (event.changedTouches[0]?.clientX || 0);
+    if (Math.abs(delta) > 40) goToPage(pageNumber + (delta > 0 ? 1 : -1));
+  };
+
+  return (
+    <div className="space-y-3">
+      <div
+        ref={readerRef}
+        className="relative flex min-h-[50vh] w-full touch-pan-y items-center justify-center overflow-hidden rounded-xl border bg-slate-100 p-3 dark:bg-slate-900"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <canvas ref={canvasRef} className="max-h-[65vh] max-w-full rounded bg-white shadow-sm" aria-label={`Page ${pageNumber}`} />
+        {rendering && <span className="absolute rounded-full bg-card/90 px-3 py-2 text-xs font-semibold text-muted-foreground shadow">Chargement de la page...</span>}
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <Button type="button" variant="outline" size="sm" onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} aria-label="Page précédente">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-xs font-semibold text-muted-foreground">Page {pageNumber} / {pageCount || '…'} · Glissez pour naviguer</span>
+        <Button type="button" variant="outline" size="sm" onClick={() => goToPage(pageNumber + 1)} disabled={!pageCount || pageNumber >= pageCount} aria-label="Page suivante">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -831,15 +927,7 @@ export const ProductDetailPage: React.FC = () => {
                       {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(10, previewTotalPages)} première${Math.min(10, previewTotalPages) > 1 ? 's' : ''} page${Math.min(10, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les dix premières pages du livre sont consultables gratuitement.'}
                     </DialogDescription>
           </DialogHeader>
-          <div className="w-full aspect-[3/4] sm:aspect-[4/3] rounded-xl overflow-hidden border bg-muted">
-            {previewBlobUrl && (
-              <iframe
-                src={previewBlobUrl}
-                title={`Aperçu de ${product.title}`}
-                className="w-full h-full border-0"
-              />
-            )}
-          </div>
+          {previewBlobUrl && <PdfPreviewReader blobUrl={previewBlobUrl} maxPages={MAX_PREVIEW_PAGES} />}
         </DialogContent>
       </Dialog>
 

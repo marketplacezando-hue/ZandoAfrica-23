@@ -5,7 +5,7 @@ vi.mock('@/db/supabase', () => ({
 }));
 
 import { DIGITAL_BOOK_MAX_BYTES, validateDigitalBookFile } from '@/services/digitalBooks';
-import { isValidMerchantUrl } from '@/lib/digitalProducts';
+import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
 
 const signature = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 
@@ -46,5 +46,11 @@ describe('digital product safety rules', () => {
     expect(isValidMerchantUrl('http://seller.example/book')).toBe(true);
     expect(isValidMerchantUrl('javascript:alert(1)')).toBe(false);
     expect(isValidMerchantUrl('https://user:pass@seller.example/book')).toBe(false);
+  });
+  it('adds HTTPS once to bare merchant domains', () => {
+    expect(normalizeMerchantUrl('monsite.com')).toBe('https://monsite.com');
+    expect(normalizeMerchantUrl('www.monsite.com')).toBe('https://www.monsite.com');
+    expect(normalizeMerchantUrl('https://monsite.com')).toBe('https://monsite.com');
+    expect(normalizeMerchantUrl('https://https://monsite.com')).toBeNull();
   });
 });
