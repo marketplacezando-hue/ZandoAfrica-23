@@ -5,3 +5,5 @@ Les logos de paiement affichés dans l’interface sont des SVG de marques prove
 La page officielle de couverture de Moneroo confirme que son écosystème propose, selon le pays, des méthodes Airtel, MTN MoMo, Orange, Africell, Vodacom, Wave et Visa/Mastercard : [Moneroo Coverage](https://moneroo.io/en/coverage). La présence d’un logo dans ZandoAfrica est présentée comme informative et ne garantit pas la disponibilité de la méthode dans chaque pays.
 
 La collection de référence pour les logos Visa/Mastercard est également documentée par [datatrans/payment-logos](https://github.com/datatrans/payment-logos), sous licence CC-BY-SA-4.0. Les SVG livrés dans ZandoAfrica proviennent toutefois de Simple Icons pour conserver une licence homogène dans l’application.
+
+Le logo Orange Money affiché dans la bande utilise le wordmark Orange Money actuel, intégré localement sous `public/payment-logos/orange-money.webp` afin d’éviter une dépendance à une URL distante.
