@@ -8,4 +8,4 @@ La collection de référence pour les logos Visa/Mastercard est également docum
 
 Le logo Orange Money affiché dans la bande utilise le wordmark Orange Money actuel, intégré localement sous `public/payment-logos/orange-money.webp` afin d’éviter une dépendance à une URL distante.
 
-Les ajouts locaux comprennent Free Money, AT Money, Cash Plus, TNM Mpamba, Tigo Pesa, HaloPesa et Moov Africa. Le terme « Cash » a été interprété comme **Cash Plus** ; ces logos sont présentés à titre informatif et leur disponibilité dépend du pays et du prestataire de paiement.
+Les logos Airtel Money, MTN MoMo, Orange Money, Vodacom, Visa, Mastercard, Moov Africa, AT Money, Telecel Cash, TNM, Tigo, HaloPesa et Zamtel Mobile Money utilisés dans la bande proviennent des images fournies dans `images_paiement.pdf`. Le terme « Cash » correspond ici au logo **Telecel Cash** visible dans le PDF. Ces logos sont présentés à titre informatif et leur disponibilité dépend du pays et du prestataire de paiement.
