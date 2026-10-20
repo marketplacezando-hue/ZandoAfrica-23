@@ -2,13 +2,20 @@ import React from 'react';
 
 const paymentLogos = [
   { name: 'Airtel Money', file: '/payment-logos/airtel.svg', kind: 'svg' },
-  { name: 'MTN MoMo', file: '/payment-logos/mtn.png', kind: 'image' },
+  { name: 'MTN MoMo', file: '/payment-logos/mtn.png', kind: 'image', imageClass: 'max-h-7 max-w-[66px]' },
   { name: 'Orange Money', file: '/payment-logos/orange-money.webp', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[88px]' },
   { name: 'Africell', file: '/payment-logos/africell.png', kind: 'image', hasWordmark: true },
   { name: 'Vodacom', file: '/payment-logos/vodacom.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[82px]' },
   { name: 'Wave', file: '/payment-logos/wave.png', kind: 'image', hasWordmark: true },
   { name: 'Visa', file: '/payment-logos/visa.svg', kind: 'svg', imageClass: 'max-h-7 max-w-[58px]' },
-  { name: 'Mastercard', file: '/payment-logos/mastercard.svg', kind: 'svg', imageClass: 'max-h-7 max-w-[58px]' }
+  { name: 'Mastercard', file: '/payment-logos/mastercard.svg', kind: 'svg', imageClass: 'max-h-7 max-w-[58px]' },
+  { name: 'Free Money', file: '/payment-logos/free-money.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[88px]' },
+  { name: 'AT Money', file: '/payment-logos/at-money.webp', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[52px]' },
+  { name: 'Cash Plus', file: '/payment-logos/cash-plus.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[92px]' },
+  { name: 'TNM Mpamba', file: '/payment-logos/tnm-mpamba.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[68px]' },
+  { name: 'Tigo Pesa', file: '/payment-logos/tigo-pesa.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[88px]' },
+  { name: 'HaloPesa', file: '/payment-logos/halopesa.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[88px]' },
+  { name: 'Moov Africa', file: '/payment-logos/moov-africa.png', kind: 'image', hasWordmark: true, imageClass: 'max-h-7 max-w-[92px]' }
 ] as const;
 
 export const PaymentLogosMarquee: React.FC = () => {
