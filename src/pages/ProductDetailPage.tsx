@@ -352,6 +352,10 @@ export const ProductDetailPage: React.FC = () => {
     toast.success('Lien de l\'annonce copié dans le presse-papiers !');
     setTimeout(() => setCopied(false), 2000);
   };
+  const handleFacebookShare = () => {
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+    window.open(facebookShareUrl, '_blank', 'noopener,noreferrer,width=620,height=520');
+  };
 
   // Requirement 5: Do NOT display seller phone in plain text on the page
   const handleCall = () => {
@@ -611,10 +615,22 @@ export const ProductDetailPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  title="Partager l'annonce"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Copier le lien"
+                  aria-label="Copier le lien de l'annonce"
                 >
                   {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFacebookShare}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-sm transition-colors hover:bg-[#166FE5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1877F2] focus-visible:ring-offset-2 cursor-pointer"
+                  title="Partager sur Facebook"
+                  aria-label="Partager l'annonce sur Facebook"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+                    <path d="M14 8h3V4h-3c-3.314 0-5 1.686-5 5v3H6v4h3v8h4v-8h3.2l.8-4H13V9c0-.552.448-1 1-1Z" />
+                  </svg>
                 </button>
                 <button
                   type="button"
