@@ -95,6 +95,7 @@ export const PublicFooter: React.FC = () => {
               <li><Link to="/abonnement" className="hover:text-white hover:underline transition-colors">Formules d'abonnement</Link></li>
               <li><Link to="/verifier-code" className="hover:text-white hover:underline transition-colors">Vérifier mon code promo</Link></li>
               <li><Link to="/favoris" className="hover:text-white hover:underline transition-colors">Mes annonces favorites</Link></li>
+              <li><Link to="/mes-achats" className="hover:text-white hover:underline transition-colors">Mes achats numériques</Link></li>
             </ul>
           </div>
 

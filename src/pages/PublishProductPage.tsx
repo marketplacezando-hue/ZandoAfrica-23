@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/common/CountrySelect';
 import { createMonerooPayment } from '@/services/monerooPayments';
+import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -56,6 +57,11 @@ export const PublishProductPage: React.FC = () => {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [digitalBookFileName, setDigitalBookFileName] = useState('');
+  const [digitalBookUploadToken, setDigitalBookUploadToken] = useState<string | null>(null);
+  const [digitalBookPageCount, setDigitalBookPageCount] = useState<number | null>(null);
+  const [digitalBookError, setDigitalBookError] = useState<string | null>(null);
+  const [uploadingDigitalBook, setUploadingDigitalBook] = useState(false);
 
   // Step 3: Billing & Duration & Promo Code
   const [selectedDurationDays, setSelectedDurationDays] = useState(30);
@@ -71,6 +77,17 @@ export const PublishProductPage: React.FC = () => {
       setCurrency(c.currency);
     }
   }, [countryId, countries]);
+
+  useEffect(() => {
+    if (categories.length > 0 && !categories.some(category => category.id === categoryId)) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, categoryId]);
+
+  const digitalCategoryAvailable = categories.some(category => category.id === 'digital-products');
+  const isDigitalProduct = digitalCategoryAvailable && categoryId === 'digital-products';
+  const digitalPdfMaxBytes = Math.min(20 * 1024 * 1024, Math.max(1, Number(settings.digital_pdf_max_bytes) || 20 * 1024 * 1024));
+  const digitalPdfMaxMiB = (digitalPdfMaxBytes / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
   // Pricing calculations
   const defaultDurationOptions = [
@@ -149,6 +166,45 @@ export const PublishProductPage: React.FC = () => {
     setUploadingAvatar(false);
   };
 
+  const handleDigitalBookSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setDigitalBookFileName(file.name);
+    setDigitalBookUploadToken(null);
+    setDigitalBookPageCount(null);
+    setDigitalBookError(null);
+
+    const validationError = await validateDigitalBookFile(file, digitalPdfMaxBytes);
+    if (validationError) {
+      setDigitalBookError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
+    setUploadingDigitalBook(true);
+    try {
+      const upload = await uploadDigitalBook(file, digitalPdfMaxBytes);
+      setDigitalBookUploadToken(upload.upload_token);
+      setDigitalBookPageCount(upload.page_count);
+      toast.success('Fichier PDF ajouté.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Le fichier PDF n’a pas pu être téléversé.';
+      setDigitalBookError(message);
+      toast.error(message);
+    } finally {
+      setUploadingDigitalBook(false);
+    }
+  };
+
+  const removeDigitalBook = () => {
+    setDigitalBookFileName('');
+    setDigitalBookUploadToken(null);
+    setDigitalBookPageCount(null);
+    setDigitalBookError(null);
+  };
+
   // Step 1 Validation
   const validateStep1 = () => {
     if (!title.trim()) {
@@ -182,6 +238,10 @@ export const PublishProductPage: React.FC = () => {
   const validateStep2 = () => {
     if (photoUrls.length === 0) {
       toast.error('Veuillez ajouter au moins une photo du produit.');
+      return false;
+    }
+    if (isDigitalProduct && !digitalBookUploadToken) {
+      toast.error(digitalBookError || 'Veuillez ajouter un fichier PDF valide pour ce produit numérique.');
       return false;
     }
     return true;
@@ -250,7 +310,13 @@ export const PublishProductPage: React.FC = () => {
         external_url: externalUrl.trim() || null,
         merchant_url: externalUrl.trim() || null,
         photos: photoUrls,
-        video_url: videoUrl.trim() || null,
+        video_url: isDigitalProduct ? null : videoUrl.trim() || null,
+        ...(isDigitalProduct && digitalBookUploadToken
+          ? {
+              digital_upload_token: digitalBookUploadToken,
+              digital_page_count: digitalBookPageCount
+            }
+          : {}),
         duration_days: selectedDurationDays,
         promo_code_used: promoCodeValid ? promoCodeInput.trim() : null
       });
@@ -598,8 +664,64 @@ export const PublishProductPage: React.FC = () => {
               {uploadingPhotos && <p className="text-xs text-primary font-medium animate-pulse">Téléversement des photos en cours...</p>}
             </div>
 
+            {isDigitalProduct && (
+              <div className="space-y-2 border-t pt-4">
+                <label className="text-xs font-bold text-foreground flex items-center justify-between">
+                  <span>Ajouter un fichier PDF *</span>
+                  <span className="text-[10px] text-muted-foreground">Obligatoire</span>
+                </label>
+
+                {digitalBookFileName ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-foreground">{digitalBookFileName}</p>
+                      {digitalBookPageCount !== null && !uploadingDigitalBook && (
+                        <p className="text-[11px] text-muted-foreground">{digitalBookPageCount} page{digitalBookPageCount === 1 ? '' : 's'}</p>
+                      )}
+                    </div>
+                    {!uploadingDigitalBook && (
+                      <button
+                        type="button"
+                        onClick={removeDigitalBook}
+                        className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Supprimer le fichier PDF"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-border hover:border-primary bg-muted/10 hover:bg-primary/5 cursor-pointer transition-colors">
+                    <Upload className="w-8 h-8 text-primary mb-2" />
+                    <span className="text-xs sm:text-sm font-bold text-foreground">Sélectionner le fichier PDF</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">PDF uniquement · limite configurée : {digitalPdfMaxMiB} Mio</span>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      onChange={handleDigitalBookSelect}
+                      className="hidden"
+                      disabled={uploadingDigitalBook}
+                    />
+                  </label>
+                )}
+
+                {uploadingDigitalBook && (
+                  <p className="text-xs text-primary font-medium animate-pulse">Téléversement du fichier PDF en cours...</p>
+                )}
+                {digitalBookError && (
+                  <p className="flex items-start gap-1.5 text-xs text-destructive">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{digitalBookError}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Le serveur peut appliquer une limite configurable différente. Le fichier est contrôlé avant l’envoi.
+                </p>
+              </div>
+            )}
+
             {/* Video selector directly from device gallery (Requirement 3) */}
-            <div className="space-y-2 border-t pt-4">
+            {!isDigitalProduct && <div className="space-y-2 border-t pt-4">
               <label className="text-xs font-bold text-foreground flex items-center justify-between">
                 <span>Vidéo du produit (depuis la galerie de votre appareil)</span>
                 <span className="text-[10px] text-muted-foreground">Facultatif</span>
@@ -640,7 +762,7 @@ export const PublishProductPage: React.FC = () => {
                 </label>
               )}
               {uploadingVideo && <p className="text-xs text-primary font-medium animate-pulse">Chargement de la vidéo...</p>}
-            </div>
+            </div>}
 
             {/* Navigation buttons */}
             <div className="pt-4 flex items-center justify-between border-t">

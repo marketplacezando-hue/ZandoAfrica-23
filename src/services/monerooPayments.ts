@@ -1,18 +1,19 @@
 import { supabase } from '@/db/supabase';
 
-export type MonerooServiceType = 'product_listing' | 'banner_ad' | 'subscription';
+export type MonerooServiceType = 'product_listing' | 'banner_ad' | 'subscription' | 'book_purchase';
 export type MonerooCustomer = {
   first_name: string;
   last_name: string;
   email: string;
   phone?: string;
+  country_code?: string;
 };
 export type MonerooPaymentResult = {
   reference: string;
   type?: MonerooServiceType;
   amount?: number;
   currency?: string;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
   checkout_url?: string | null;
   checkout_state?: string;
   created_at?: string;

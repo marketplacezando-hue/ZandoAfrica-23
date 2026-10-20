@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { zandoApi } from '@/services/zandoApi';
+import { supabase } from '@/db/supabase';
 import type { Product, Category, Country } from '@/types/zando';
 import {
   Package,
@@ -20,11 +21,23 @@ import { toast } from 'sonner';
 import { CountrySelect } from '@/components/common/CountrySelect';
 import { CountryFlag } from '@/components/common/CountryFlag';
 
+type DigitalBookSummary = {
+  product_id: string;
+  digital_book_id: string;
+  page_count: number;
+  byte_size: number;
+  status: string;
+  completed_count: number;
+  pending_count: number;
+};
+
 export const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
+  const [digitalBookSummaries, setDigitalBookSummaries] = useState<Record<string, DigitalBookSummary>>({});
+  const [digitalBookSummaryError, setDigitalBookSummaryError] = useState(false);
 
   // Filters
   const [currentTab, setCurrentTab] = useState<'published' | 'suspended' | 'trashed'>('published');
@@ -49,6 +62,15 @@ export const AdminProducts: React.FC = () => {
       setProducts(prods);
       setCategories(cats);
       setCountries(cntrs);
+      const digitalProductIds = prods.filter(product => product.category_id === 'digital-products').map(product => product.id).slice(0, 500);
+      if (digitalProductIds.length) {
+        const { data, error } = await supabase.rpc('admin_list_digital_book_summaries', { p_product_ids: digitalProductIds });
+        setDigitalBookSummaryError(Boolean(error));
+        setDigitalBookSummaries(Object.fromEntries(((data || []) as DigitalBookSummary[]).map(summary => [summary.product_id, summary])));
+      } else {
+        setDigitalBookSummaryError(false);
+        setDigitalBookSummaries({});
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -181,6 +203,11 @@ export const AdminProducts: React.FC = () => {
       </div>
 
       {/* Products Table */}
+      {digitalBookSummaryError && products.some(product => product.category_id === 'digital-products') && (
+        <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          Les détails privés des livres numériques ne sont pas disponibles. Vérifiez les migrations digitales et les droits administrateur.
+        </p>
+      )}
       <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -216,6 +243,12 @@ export const AdminProducts: React.FC = () => {
                         <div className="min-w-0 max-w-[200px]">
                           <div className="font-bold text-foreground truncate">{p.title}</div>
                           <div className="text-[10px] text-muted-foreground truncate">{p.categories?.name}</div>
+                          {p.category_id === 'digital-products' && digitalBookSummaries[p.id] && (
+                            <div className="mt-1 space-y-0.5 text-[10px] text-muted-foreground">
+                              <div>{digitalBookSummaries[p.id].page_count} pages · {(digitalBookSummaries[p.id].byte_size / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Mio · {digitalBookSummaries[p.id].status}</div>
+                              <div>{digitalBookSummaries[p.id].completed_count} accès confirmés · {digitalBookSummaries[p.id].pending_count} paiements en attente</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

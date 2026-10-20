@@ -210,7 +210,7 @@ export const AdminFinances: React.FC = () => {
                   transactions.map(t => (
                     <tr key={t.id} className="hover:bg-muted/20">
                       <td className="p-3.5 whitespace-nowrap font-mono font-bold">{t.reference}</td>
-                      <td className="p-3.5 whitespace-nowrap font-medium">{t.type}</td>
+                      <td className="p-3.5 whitespace-nowrap font-medium">{t.type === 'book_purchase' ? 'Achat de livre numérique' : t.type}</td>
                       <td className="p-3.5 whitespace-nowrap font-extrabold text-emerald-600">
                         {new Intl.NumberFormat('fr-FR').format(t.amount)} {t.currency}
                       </td>

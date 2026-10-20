@@ -10,13 +10,30 @@ import {
   Megaphone,
   Users,
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/db/supabase';
 import { toast } from 'sonner';
 import type { PlatformSettings } from '@/types/zando';
+
+type DigitalBookEvent = {
+  id: string;
+  action: string;
+  status: number;
+  code: string | null;
+  elapsed_ms: number | null;
+  product_id: string | null;
+  digital_book_id: string | null;
+  transaction_id: string | null;
+  created_at: string;
+  total_count: number;
+};
 
 const defaultTheme: PlatformSettings['theme'] = {
   primary_color: '#00A651',
@@ -60,6 +77,10 @@ export const AdminSettings: React.FC = () => {
   const [subscriptionPlans, setSubscriptionPlans] = useState<PlatformSettings['subscription_plans']>(settings.subscription_plans || defaultPlans);
   const [aboutContent, setAboutContent] = useState(settings.about_content || aboutDefault);
   const [securityContent, setSecurityContent] = useState(settings.security_content || securityDefault);
+  const [digitalPdfMaxMiB, setDigitalPdfMaxMiB] = useState(settings.digital_pdf_max_bytes / (1024 * 1024));
+  const [digitalBookEvents, setDigitalBookEvents] = useState<DigitalBookEvent[]>([]);
+  const [digitalEventsLoading, setDigitalEventsLoading] = useState(false);
+  const [digitalEventsError, setDigitalEventsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -74,7 +95,27 @@ export const AdminSettings: React.FC = () => {
     setSubscriptionPlans(settings.subscription_plans?.length ? settings.subscription_plans : defaultPlans);
     setAboutContent(settings.about_content || aboutDefault);
     setSecurityContent(settings.security_content || securityDefault);
+    setDigitalPdfMaxMiB(Math.min(20, Math.max(1, settings.digital_pdf_max_bytes / (1024 * 1024))));
   }, [settings]);
+
+  const loadDigitalBookEvents = async () => {
+    setDigitalEventsLoading(true);
+    setDigitalEventsError(null);
+    try {
+      const { data, error } = await supabase.rpc('admin_list_digital_book_events', {
+        p_limit: 25,
+        p_offset: 0,
+        p_product_id: null
+      });
+      if (error) throw error;
+      setDigitalBookEvents((data || []) as DigitalBookEvent[]);
+    } catch {
+      setDigitalEventsError('Historique indisponible. Vérifiez les migrations numériques et les droits administrateur.');
+      setDigitalBookEvents([]);
+    } finally {
+      setDigitalEventsLoading(false);
+    }
+  };
 
   const handleSaveSettings = async () => {
     if (Object.values(theme).some(value => typeof value === 'string' && value.startsWith('#') && !isHexColor(value))) {
@@ -87,6 +128,10 @@ export const AdminSettings: React.FC = () => {
     }
     if (subscriptionPlans.some(item => !Number.isInteger(item.limit) || item.limit < 0) || new Set(subscriptionPlans.map(item => item.months)).size !== subscriptionPlans.length) {
       toast.error('Vérifiez les limites et les durées des abonnements (durées uniques de 1 à 3 mois).');
+      return;
+    }
+    if (!Number.isFinite(digitalPdfMaxMiB) || digitalPdfMaxMiB < 1 || digitalPdfMaxMiB > 20) {
+      toast.error('La taille maximale du PDF doit être comprise entre 1 et 20 Mio.');
       return;
     }
 
@@ -105,7 +150,8 @@ export const AdminSettings: React.FC = () => {
         ['ad_pricing', adPricing.map(item => ({ ...item, currency: 'FCFA' }))],
         ['subscription_plans', subscriptionPlans.map(item => ({ ...item, currency: 'FCFA' }))],
         ['about_content', aboutContent.trim()],
-        ['security_content', securityContent.trim()]
+        ['security_content', securityContent.trim()],
+        ['digital_pdf_max_bytes', Math.round(digitalPdfMaxMiB * 1024 * 1024)]
       ];
       const results = await Promise.all(updates.map(([key, value]) => zandoApi.updatePlatformSetting(key, value)));
       if (results.some(result => !result)) {
@@ -198,6 +244,50 @@ export const AdminSettings: React.FC = () => {
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <h2 className="flex items-center gap-2 font-extrabold"><FileText className="h-5 w-5 text-primary" />Limite des livres numériques</h2>
+        <p className="text-xs text-muted-foreground">La limite du serveur s’applique à l’original et prévaut sur le contrôle du navigateur. Maximum technique actuel : 20 Mio.</p>
+        <label className="block max-w-xs space-y-2 text-xs font-bold">
+          <span>Taille maximale du PDF (Mio)</span>
+          <Input type="number" min="1" max="20" step="1" value={digitalPdfMaxMiB} onChange={event => setDigitalPdfMaxMiB(Number(event.target.value))} aria-label="Taille maximale d’un livre PDF en Mio" />
+        </label>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-extrabold"><AlertCircle className="h-5 w-5 text-amber-600" />Erreurs d’import et accès aux livres</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Journal privé des opérations; aucun fichier, email, jeton ni clé R2 n’est affiché.</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => void loadDigitalBookEvents()} disabled={digitalEventsLoading} className="gap-2 self-start">
+            {digitalEventsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Charger l’historique
+          </Button>
+        </div>
+        {digitalEventsError && <p role="status" className="text-sm text-amber-700">{digitalEventsError}</p>}
+        {!digitalEventsError && digitalBookEvents.length === 0 && <p className="text-sm text-muted-foreground">Aucun événement chargé.</p>}
+        {digitalBookEvents.length > 0 && (
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[680px] text-left text-xs">
+              <thead className="bg-muted/40 text-muted-foreground"><tr>
+                <th className="p-3">Date</th><th className="p-3">Opération</th><th className="p-3">Résultat</th><th className="p-3">Code</th><th className="p-3">Produit</th><th className="p-3">Durée</th>
+              </tr></thead>
+              <tbody>{digitalBookEvents.map(event => (
+                <tr key={event.id} className="border-t border-border">
+                  <td className="p-3 whitespace-nowrap">{new Date(event.created_at).toLocaleString('fr-FR')}</td>
+                  <td className="p-3">{event.action}</td>
+                  <td className={`p-3 font-semibold ${event.status >= 400 ? 'text-rose-600' : 'text-emerald-700'}`}>{event.status}</td>
+                  <td className="p-3 font-mono">{event.code || '—'}</td>
+                  <td className="p-3 font-mono">{event.product_id ? `${event.product_id.slice(0, 8)}…` : '—'}</td>
+                  <td className="p-3">{event.elapsed_ms ?? '—'} ms</td>
+                </tr>
+              ))}</tbody>
+            </table>
+            <p className="p-3 text-[11px] text-muted-foreground">Affichage des {digitalBookEvents.length} événements les plus récents.</p>
+          </div>
+        )}
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xs">

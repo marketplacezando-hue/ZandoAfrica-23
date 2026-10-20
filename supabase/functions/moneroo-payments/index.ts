@@ -329,7 +329,7 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
     const type = body.serviceType;
     const itemId = body.itemId;
     const customer = body.customer;
-    if (!['product_listing', 'banner_ad', 'subscription'].includes(String(type)) || typeof itemId !== 'string' || itemId.length > 80) {
+    if (!['product_listing', 'banner_ad', 'subscription', 'book_purchase'].includes(String(type)) || typeof itemId !== 'string' || itemId.length > 80) {
       throw new Error('invalid_service_reference');
     }
     if (!customer || typeof customer !== 'object' || Array.isArray(customer)) throw new Error('invalid_customer');
@@ -349,9 +349,15 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
   }
   if (txData.checkout_state !== 'created') return { status: 'pending', reference, checkout_url: null };
 
+  const customer = txData.customer as JsonRecord | undefined;
   const restrictCountryCode = txData.type === 'product_listing'
     ? await readProductCountryCode(String(txData.item_id ?? ''))
-    : null;
+    : txData.type === 'book_purchase'
+      ? String(customer?.country_code ?? '').toUpperCase()
+      : null;
+  if (txData.type === 'book_purchase' && !/^[A-Z]{2}$/.test(restrictCountryCode ?? '')) {
+    throw new Error('payment_country_not_found');
+  }
   const claimed = await rpc<boolean>('claim_moneroo_checkout', { p_reference: reference });
   if (!claimed) {
     const current = await readTransaction(reference);
@@ -361,7 +367,6 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
 
   const amount = Number(txData.amount);
   const currency = String(txData.currency ?? '').toUpperCase();
-  const customer = txData.customer as JsonRecord | undefined;
   if (!Number.isInteger(amount) || amount <= 0 || !['XAF', 'XOF', 'CDF'].includes(currency) || !customer) {
     await rpc('mark_moneroo_checkout_rejected', { p_reference: reference });
     throw new Error('invalid_server_payment_configuration');

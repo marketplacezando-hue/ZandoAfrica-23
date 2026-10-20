@@ -2,3 +2,8 @@
 # This public checkout accepts anonymous marketplace visitors. Amounts and service activation
 # are enforced server-side; webhooks authenticate with Moneroo's HMAC signature.
 verify_jwt = false
+
+[functions.digital-books]
+# Anonymous sellers/buyers use this endpoint. Files remain private in the Worker;
+# only service_role reads staging/books and verifies completed transactions AND entitlements.
+verify_jwt = false

@@ -1,14 +1,22 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Clock3, CreditCard, Loader2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, CreditCard, Download, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { verifyMonerooPayment, retryMonerooPayment, type MonerooPaymentResult } from '@/services/monerooPayments';
+import * as digitalBooks from '@/services/digitalBooks';
 
-type ViewState = 'loading' | 'pending' | 'completed' | 'failed' | 'cancelled' | 'error';
-const serviceLabels = {
+type ViewState = 'loading' | 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded' | 'error';
+type PaymentReturnResult = MonerooPaymentResult & { type?: MonerooPaymentResult['type'] | 'book_purchase' };
+type DigitalBooksApi = {
+  getDigitalDownload?: (reference: string) => Promise<{ url?: string; error?: string }>;
+};
+
+const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
+const serviceLabels: Record<string, string> = {
   product_listing: 'Publication d’annonce',
   banner_ad: 'Publicité bannière',
   subscription: 'Abonnement vendeur',
+  book_purchase: 'Achat de livre numérique',
 };
 
 const statusText: Record<ViewState, string> = {
@@ -17,6 +25,7 @@ const statusText: Record<ViewState, string> = {
   completed: 'Paiement réussi',
   failed: 'Paiement échoué',
   cancelled: 'Paiement annulé',
+  refunded: 'Paiement remboursé',
   error: 'Vérification indisponible',
 };
 
@@ -26,16 +35,18 @@ export const PaymentReturnPage: React.FC = () => {
   const reference = searchParams.get('reference');
   const paymentId = searchParams.get('paymentId');
   const [state, setState] = useState<ViewState>(reference ? 'loading' : 'error');
-  const [payment, setPayment] = useState<MonerooPaymentResult | null>(null);
+  const [payment, setPayment] = useState<PaymentReturnResult | null>(null);
   const [message, setMessage] = useState('');
   const [checking, setChecking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   const checkPayment = useCallback(async (manual = false) => {
     if (!reference || checking) return;
     setChecking(true);
     const result = await verifyMonerooPayment(reference, paymentId);
     if (result.data) {
-      setPayment(result.data);
+      setPayment(result.data as PaymentReturnResult);
       setState(result.data.status);
       setMessage(result.data.verification === 'mismatch'
         ? 'Le montant ou la devise ne correspond pas à la demande. Le service reste désactivé pendant la vérification.'
@@ -59,7 +70,7 @@ export const PaymentReturnPage: React.FC = () => {
       const result = await verifyMonerooPayment(reference, paymentId);
       if (cancelled) return;
       if (result.data) {
-        setPayment(result.data);
+        setPayment(result.data as PaymentReturnResult);
         setState(result.data.status);
         setMessage(result.data.status === 'pending'
           ? 'Moneroo n’a pas encore confirmé de résultat définitif. Votre service reste en attente.'
@@ -80,12 +91,25 @@ export const PaymentReturnPage: React.FC = () => {
     setChecking(true);
     const result = await retryMonerooPayment(reference);
     setChecking(false);
+    if (result.data?.type === 'book_purchase') {
+      try {
+        const stored: unknown = JSON.parse(localStorage.getItem('zando_digital_purchases') || '[]');
+        const purchases = Array.isArray(stored) ? stored : [];
+        const previous = purchases.find(item => item && typeof item === 'object' && item.reference === reference) as { productId?: string } | undefined;
+        localStorage.setItem('zando_digital_purchases', JSON.stringify([
+          ...purchases.filter(item => item && typeof item === 'object' && item.reference !== result.data?.reference),
+          { reference: result.data.reference, productId: previous?.productId }
+        ].slice(-50)));
+      } catch {
+        // The retry remains usable if local browser storage is unavailable.
+      }
+    }
     if (result.data?.checkout_url) {
       window.location.assign(result.data.checkout_url);
       return;
     }
     if (result.data) {
-      setPayment(result.data);
+      setPayment(result.data as PaymentReturnResult);
       setState(result.data.status);
       setMessage(result.data.status === 'pending'
         ? 'Cette transaction est déjà en cours de traitement. Nous n’en avons pas créé une deuxième.'
@@ -95,12 +119,34 @@ export const PaymentReturnPage: React.FC = () => {
     }
   };
 
+  const handleDigitalDownload = async () => {
+    if (state !== 'completed' || payment?.type !== 'book_purchase' || !payment.reference || downloading) return;
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      if (!digitalBooksApi.getDigitalDownload) {
+        setDownloadError('Le téléchargement du livre numérique n’est pas encore disponible.');
+        return;
+      }
+      const result = await digitalBooksApi.getDigitalDownload(payment.reference);
+      if (result.url) {
+        window.location.assign(result.url);
+        return;
+      }
+      setDownloadError(result.error || 'Le lien de téléchargement n’a pas pu être généré.');
+    } catch {
+      setDownloadError('Impossible de préparer le téléchargement du livre pour le moment.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const Icon = state === 'completed' ? CheckCircle2
     : state === 'failed' ? XCircle
-      : state === 'cancelled' ? AlertCircle
+        : state === 'cancelled' || state === 'refunded' ? AlertCircle
         : state === 'error' ? AlertCircle : state === 'loading' ? Loader2 : Clock3;
   const iconStyle = state === 'completed' ? 'bg-emerald-100 text-emerald-700'
-    : state === 'failed' || state === 'cancelled' || state === 'error' ? 'bg-rose-100 text-rose-700'
+    : state === 'failed' || state === 'cancelled' || state === 'refunded' || state === 'error' ? 'bg-rose-100 text-rose-700'
       : 'bg-amber-100 text-amber-700';
   const canRetry = state === 'failed' || state === 'cancelled'
     || (state === 'pending' && payment?.checkout_state === 'rejected');
@@ -122,6 +168,15 @@ export const PaymentReturnPage: React.FC = () => {
             {payment.created_at && <div className="flex justify-between gap-4"><span className="text-muted-foreground">Date</span><span>{new Date(payment.created_at).toLocaleString('fr-FR')}</span></div>}
             <div className="flex justify-between gap-4"><span className="text-muted-foreground">Référence</span><span className="font-mono text-xs break-all">{payment.reference}</span></div>
             <div className="flex justify-between gap-4"><span className="text-muted-foreground">Statut</span><strong>{statusText[state]}</strong></div>
+          </div>
+        )}
+        {state === 'completed' && payment?.type === 'book_purchase' && (
+          <div className="space-y-2">
+            <Button onClick={() => void handleDigitalDownload()} disabled={downloading} className="rounded-full gap-2">
+              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {downloading ? 'Préparation du téléchargement...' : 'Télécharger le livre'}
+            </Button>
+            {downloadError && <p className="text-sm text-rose-600 dark:text-rose-400">{downloadError}</p>}
           </div>
         )}
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">

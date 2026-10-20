@@ -40,6 +40,7 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [settings, setSettings] = useState<PlatformSettings>({
     site_mode: { mode: 'paid' },
+    digital_pdf_max_bytes: 20 * 1024 * 1024,
     theme: {
       primary_color: '#00A651',
       secondary_color: '#FF8A00',

@@ -33,6 +33,8 @@ export interface Product {
   merchant_url?: string | null;
   photos: string[];
   video_url: string | null;
+  digital_upload_token?: string | null;
+  digital_page_count?: number | null;
   dimensions?: string | null;
   options?: Array<{ name: string; values: string[] }> | string[] | null;
   duration_days: number;
@@ -116,7 +118,7 @@ export interface PromoCode {
 export interface Transaction {
   id: string;
   reference: string;
-  type: 'product_listing' | 'banner_ad' | 'subscription';
+  type: 'product_listing' | 'banner_ad' | 'subscription' | 'book_purchase';
   amount: number;
   currency: string;
   payment_method: string;
@@ -164,6 +166,7 @@ export interface AdminAuditLog {
 
 export interface PlatformSettings {
   site_mode: { mode: 'free' | 'paid' };
+  digital_pdf_max_bytes: number;
   theme: {
     primary_color: string;
     secondary_color: string;

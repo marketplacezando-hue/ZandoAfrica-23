@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
+import * as digitalBooks from '@/services/digitalBooks';
+import { createMonerooPayment } from '@/services/monerooPayments';
 import { supabase } from '@/db/supabase';
 import type { Product, ProductReview } from '@/types/zando';
 import {
@@ -27,7 +29,10 @@ import {
   Ruler,
   Play,
   User,
-  Plus
+  Plus,
+  BookOpen,
+  Loader2,
+  CreditCard
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
 import { CountryFlag } from '@/components/common/CountryFlag';
@@ -42,6 +47,34 @@ import {
   DialogDescription
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+
+type DigitalBookCustomer = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  country_code?: string;
+};
+
+type DigitalBooksApi = {
+  getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
+  createDigitalPurchase?: (productId: string, customer: DigitalBookCustomer) => Promise<{ purchaseId?: string; error?: string }>;
+  getDigitalDownload?: (reference: string) => Promise<{ url?: string; error?: string }>;
+};
+
+type DigitalPaymentResponse = {
+  data: { reference?: string; checkout_url?: string | null } | null;
+  error?: string;
+};
+
+// The digital-book service and Moneroo type unions may land separately from this UI.
+// Keep the boundary typed locally without inventing public URLs or weakening the form data.
+const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
+const createDigitalBookPayment = createMonerooPayment as unknown as (input: {
+  serviceType: 'book_purchase';
+  itemId: string;
+  customer: DigitalBookCustomer;
+}) => Promise<DigitalPaymentResponse>;
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,6 +103,18 @@ export const ProductDetailPage: React.FC = () => {
 
   // Active Media Tab (Photos vs Video)
   const [mediaTab, setMediaTab] = useState<'photos' | 'video'>('photos');
+
+  // Digital book purchase and server-limited preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewTotalPages, setPreviewTotalPages] = useState<number | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [digitalFirstName, setDigitalFirstName] = useState('');
+  const [digitalLastName, setDigitalLastName] = useState('');
+  const [digitalEmail, setDigitalEmail] = useState('');
+  const [digitalPhone, setDigitalPhone] = useState('');
+  const [digitalPurchaseLoading, setDigitalPurchaseLoading] = useState(false);
 
   // Support glissement tactile (swipe gauche/droite) pour la galerie photos (Étape 7)
   const touchStartXRef = useRef<number>(0);
@@ -296,6 +341,94 @@ export const ProductDetailPage: React.FC = () => {
         city: product.city
       });
       window.open(merchantLink, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleDigitalPreview = async () => {
+    setPreviewError(null);
+    setPreviewLoading(true);
+    try {
+      if (!digitalBooksApi.getDigitalPreview) {
+        setPreviewError('L’aperçu du livre numérique n’est pas encore disponible.');
+        return;
+      }
+      const result = await digitalBooksApi.getDigitalPreview(product.id);
+      if (result.error || !result.blobUrl) {
+        setPreviewError(result.error || 'Impossible de charger l’aperçu du livre.');
+        return;
+      }
+      setPreviewBlobUrl(result.blobUrl);
+      setPreviewTotalPages(result.totalPages);
+      setPreviewOpen(true);
+    } catch {
+      setPreviewError('Impossible de charger l’aperçu du livre pour le moment.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleDigitalPurchase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const firstName = digitalFirstName.trim();
+    const lastName = digitalLastName.trim();
+    const email = digitalEmail.trim();
+    const phone = digitalPhone.trim();
+    if (!firstName || !lastName || !email) {
+      toast.error('Veuillez renseigner votre prénom, votre nom et votre email.');
+      return;
+    }
+
+    const customer: DigitalBookCustomer = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      ...(selectedCountry?.id ? { country_code: selectedCountry.id.toUpperCase() } : {}),
+      ...(phone ? { phone } : {})
+    };
+
+    setDigitalPurchaseLoading(true);
+    try {
+      if (!digitalBooksApi.createDigitalPurchase) {
+        toast.error('L’achat de livres numériques n’est pas encore disponible.');
+        return;
+      }
+      const purchase = await digitalBooksApi.createDigitalPurchase(product.id, customer);
+      if (!purchase.purchaseId) {
+        toast.error(purchase.error || 'Impossible d’enregistrer votre achat.');
+        return;
+      }
+
+      const payment = await createDigitalBookPayment({
+        serviceType: 'book_purchase',
+        itemId: purchase.purchaseId,
+        customer
+      });
+      const reference = payment.data?.reference;
+      if (!reference) {
+        toast.error(payment.error || 'Le paiement est indisponible. Votre demande reste en attente.');
+        return;
+      }
+
+      try {
+        const stored = JSON.parse(localStorage.getItem('zando_digital_purchases') || '[]');
+        const purchases = Array.isArray(stored) ? stored : [];
+        localStorage.setItem('zando_digital_purchases', JSON.stringify([
+          ...purchases.filter(item => item && typeof item === 'object' && item.reference !== reference),
+          { reference, purchaseId: purchase.purchaseId, productId: product.id }
+        ]));
+      } catch {
+        // Checkout remains usable when browser storage is unavailable.
+      }
+
+      if (payment.data?.checkout_url) {
+        window.location.assign(payment.data.checkout_url);
+        return;
+      }
+      navigate(`/paiement/resultat?reference=${encodeURIComponent(reference)}`);
+    } catch {
+      toast.error('Impossible de démarrer l’achat pour le moment.');
+    } finally {
+      setDigitalPurchaseLoading(false);
     }
   };
 
@@ -635,21 +768,75 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Message d'avertissement de sécurité (Requirement 3: Step 2 - placé juste en dessous du nom du vendeur) */}
-            <div className="p-4 rounded-2xl border-2 border-amber-600/50 bg-amber-500/10 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 space-y-2 shadow-xs">
-              <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-                <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
-                <span className="uppercase tracking-wide">Avertissement de sécurité Zando</span>
+            {/* 2. Message d'avertissement : le parcours digital ne promet aucun moyen externe. */}
+            {product.category_id === 'digital-products' ? (
+              <div className="p-4 rounded-2xl border-2 border-amber-600/50 bg-amber-500/10 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 space-y-2 shadow-xs">
+                <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+                  <span className="uppercase tracking-wide">Avertissement pour produit numérique</span>
+                </div>
+                <p className="text-xs sm:text-sm leading-relaxed text-amber-950/90 dark:text-amber-100/90">
+                  Achetez votre livre numérique en toute confiance ! Le livre est disponible au format PDF. Vous pouvez consulter gratuitement un aperçu des cinq premières pages avant votre achat. Après confirmation du paiement par le prestataire, vous pourrez accéder au livre complet et le télécharger selon les modalités prévues par la plateforme. Les moyens de paiement effectivement disponibles sont ceux affichés dans le checkout sécurisé Moneroo pour votre pays. Pour acheter le livre complet, utilisez le bouton « Acheter sur le site marchand » ci-dessous. En cas de difficulté de paiement ou de téléchargement, contactez le service d’assistance de la plateforme.
+                </p>
               </div>
-              <p className="text-xs sm:text-sm leading-relaxed text-amber-950/90 dark:text-amber-100/90">
-                Ne versez <strong>JAMAIS d'argent d'avance</strong> (Mobile Money, Airtel Money, Orange Money ou virement) avant d'avoir vu le produit et vérifié l'identité du vendeur en personne. Privilégiez toujours la remise en main propre dans un endroit public.
-              </p>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl border-2 border-amber-600/50 bg-amber-500/10 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 space-y-2 shadow-xs">
+                <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+                  <span className="uppercase tracking-wide">Avertissement de sécurité Zando</span>
+                </div>
+                <p className="text-xs sm:text-sm leading-relaxed text-amber-950/90 dark:text-amber-100/90">
+                  Ne versez <strong>JAMAIS d'argent d'avance</strong> (Mobile Money, Airtel Money, Orange Money ou virement) avant d'avoir vu le produit et vérifié l'identité du vendeur en personne. Privilégiez toujours la remise en main propre dans un endroit public.
+                </p>
+              </div>
+            )}
 
             {/* ACTION BUTTONS */}
             <div className="space-y-3 pt-1">
-              {/* 3. Bouton "Acheter sur le site marchand" (Requirement 3: Step 3 - placé sous l'avertissement lorsque le produit possède un lien marchand) */}
-              {merchantLink && (
+              {product.category_id === 'digital-products' ? (
+                <div className="space-y-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void handleDigitalPreview()}
+                    disabled={previewLoading}
+                    className="w-full h-11 rounded-2xl font-bold text-sm gap-2 cursor-pointer"
+                  >
+                    {previewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                    <span>{previewLoading ? 'Chargement de l’aperçu...' : 'Voir le produit'}</span>
+                  </Button>
+                  {previewError && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{previewError}</p>}
+
+                  <form onSubmit={handleDigitalPurchase} className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-extrabold text-foreground">Acheter ce livre sur ZandoAfrica</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label htmlFor="digital-first-name" className="text-xs font-semibold text-foreground">Prénom *</label>
+                        <Input id="digital-first-name" value={digitalFirstName} onChange={e => setDigitalFirstName(e.target.value)} required className="h-9 text-xs" autoComplete="given-name" />
+                      </div>
+                      <div className="space-y-1">
+                        <label htmlFor="digital-last-name" className="text-xs font-semibold text-foreground">Nom *</label>
+                        <Input id="digital-last-name" value={digitalLastName} onChange={e => setDigitalLastName(e.target.value)} required className="h-9 text-xs" autoComplete="family-name" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="digital-email" className="text-xs font-semibold text-foreground">Email *</label>
+                      <Input id="digital-email" type="email" value={digitalEmail} onChange={e => setDigitalEmail(e.target.value)} required className="h-9 text-xs" autoComplete="email" />
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="digital-phone" className="text-xs font-semibold text-foreground">Téléphone <span className="font-normal text-muted-foreground">(si demandé par Moneroo)</span></label>
+                      <Input id="digital-phone" type="tel" value={digitalPhone} onChange={e => setDigitalPhone(e.target.value)} className="h-9 text-xs" autoComplete="tel" />
+                    </div>
+                    <Button type="submit" disabled={digitalPurchaseLoading} className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-sm gap-2 cursor-pointer">
+                      {digitalPurchaseLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                      {digitalPurchaseLoading ? 'Préparation du paiement...' : 'Acheter sur le site marchand'}
+                    </Button>
+                  </form>
+                </div>
+              ) : merchantLink && (
                 <div className="space-y-1">
                   <Button
                     onClick={handleMerchantSiteClick}
@@ -746,6 +933,29 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </section>
       )}
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="w-[calc(100%-1.5rem)] max-w-4xl p-3 sm:p-5 bg-card border shadow-2xl rounded-2xl">
+          <DialogHeader className="text-left space-y-1">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <span>Aperçu du livre</span>
+            </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(5, previewTotalPages)} première${Math.min(5, previewTotalPages) > 1 ? 's' : ''} page${Math.min(5, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les cinq premières pages du livre sont consultables gratuitement.'}
+                    </DialogDescription>
+          </DialogHeader>
+          <div className="w-full aspect-[3/4] sm:aspect-[4/3] rounded-xl overflow-hidden border bg-muted">
+            {previewBlobUrl && (
+              <iframe
+                src={previewBlobUrl}
+                title={`Aperçu de ${product.title}`}
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Reviews Modal (Requirement 4) */}
       <Dialog open={reviewsModalOpen} onOpenChange={setReviewsModalOpen}>
