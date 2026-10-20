@@ -85,8 +85,14 @@ export const PublishProductPage: React.FC = () => {
     }
   }, [categories, categoryId]);
 
-  const digitalCategoryAvailable = categories.some(category => category.id === 'digital-products');
-  const isDigitalProduct = digitalCategoryAvailable && categoryId === 'digital-products';
+  const selectedCategory = categories.find(category => category.id === categoryId);
+  const normalizedCategoryName = (selectedCategory?.name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  // The production category is `digital-products`; the name fallback keeps the
+  // PDF field visible if an older/custom category row uses a different slug.
+  const isDigitalProduct = categoryId === 'digital-products' || normalizedCategoryName.includes('digital');
   const digitalPdfMaxBytes = Math.min(300 * 1024 * 1024, Math.max(1, Number(settings.digital_pdf_max_bytes) || 300 * 1024 * 1024));
   const digitalPdfMaxMiB = (digitalPdfMaxBytes / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
