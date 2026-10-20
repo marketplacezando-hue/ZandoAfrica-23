@@ -226,6 +226,20 @@ function validReference(value: unknown): value is string {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
+async function readProductCountryCode(itemId: string): Promise<string> {
+  if (!validReference(itemId)) throw new Error('invalid_service_reference');
+  const query = new URLSearchParams({ select: 'country_id', id: `eq.${itemId}`, limit: '1' });
+  const result = await fetch(`${SUPABASE_URL}/rest/v1/products?${query}`, {
+    headers: { apikey: SERVICE_ROLE_KEY, authorization: `Bearer ${SERVICE_ROLE_KEY}`, accept: 'application/json' },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!result.ok) throw new Error(`database_country_${result.status}`);
+  const rows = await result.json() as Array<{ country_id?: unknown }>;
+  const countryCode = String(rows[0]?.country_id ?? '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(countryCode)) throw new Error('payment_country_not_found');
+  return countryCode;
+}
+
 function safeCheckoutUrl(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   try {
@@ -335,6 +349,9 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
   }
   if (txData.checkout_state !== 'created') return { status: 'pending', reference, checkout_url: null };
 
+  const restrictCountryCode = txData.type === 'product_listing'
+    ? await readProductCountryCode(String(txData.item_id ?? ''))
+    : null;
   const claimed = await rpc<boolean>('claim_moneroo_checkout', { p_reference: reference });
   if (!claimed) {
     const current = await readTransaction(reference);
@@ -354,6 +371,7 @@ async function createOrReuseCheckout(body: JsonRecord): Promise<JsonRecord> {
   const apiBody = {
     amount,
     currency,
+    ...(restrictCountryCode ? { restrict_country_code: restrictCountryCode } : {}),
     description: `Paiement ZandoAfrica – ${String(txData.type ?? 'service')}`,
     customer: {
       first_name: String(customer.first_name ?? ''),
