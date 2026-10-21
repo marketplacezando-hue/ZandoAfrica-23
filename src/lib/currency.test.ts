@@ -4,7 +4,7 @@ import { convertFromOriginal, formatConvertedPrice, normalizeCurrency, type Exch
 const rates: ExchangeRates = {
   base: 'USD',
   fetchedAt: Date.now(),
-  rates: { USD: 1, EUR: 0.9, CDF: 2800, XAF: 600, XOF: 600 }
+  rates: { USD: 1, EUR: 0.9, GBP: 0.78, CDF: 2800, XAF: 600, XOF: 600 }
 };
 
 describe('currency conversion', () => {
@@ -18,6 +18,12 @@ describe('currency conversion', () => {
     expect(normalizeCurrency('XOF')).toBe('FCFA');
     expect(normalizeCurrency('XAF')).toBe('FCFA');
     expect(formatConvertedPrice(600, 'XOF', 'USD', rates)).toBe('1,00 USD');
+  });
+
+  it('accepts and converts an international ISO currency such as GBP', () => {
+    expect(normalizeCurrency('gbp')).toBe('GBP');
+    expect(convertFromOriginal(600, 'FCFA', 'GBP', rates)).toBeCloseTo(0.78);
+    expect(formatConvertedPrice(600, 'FCFA', 'GBP', rates)).toBe('0,78 GBP');
   });
 
   it('does not claim a conversion when the rate set is unavailable', () => {

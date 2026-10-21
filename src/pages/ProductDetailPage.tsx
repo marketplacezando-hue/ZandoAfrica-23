@@ -336,6 +336,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const merchantLink = product.merchant_url || product.external_url;
   const productShareUrl = `https://zando-africa.vercel.app/produit/${encodeURIComponent(product.id)}`;
+  const currencyOptions = Array.from(new Set(['FCFA', 'CDF', 'EUR', 'USD', selectedCurrency]));
 
   const normalizedOptions: string[] = Array.isArray(product.options)
     ? product.options.flatMap(opt => {
@@ -671,11 +672,11 @@ export const ProductDetailPage: React.FC = () => {
                 {formattedPrice}
               </div>
 
-              {/* Currency Selector matching Image 1: FCFA, CDF, EUR, USD */}
+              {/* Keep common choices visible and add the visitor's detected ISO currency when needed. */}
               <div className="flex items-center gap-2 text-xs font-semibold">
                 <span className="text-muted-foreground">⇄ Devise affichée :</span>
                 <div className="flex items-center gap-1.5">
-                  {['FCFA', 'CDF', 'EUR', 'USD'].map(cur => (
+                  {currencyOptions.map(cur => (
                     <button
                       key={cur}
                       type="button"

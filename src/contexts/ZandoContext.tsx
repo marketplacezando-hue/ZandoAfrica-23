@@ -4,7 +4,6 @@ import { zandoApi } from '@/services/zandoApi';
 import { supabase } from '@/db/supabase';
 import { applyPlatformTheme } from '@/lib/platformTheme';
 import {
-  DISPLAY_CURRENCIES,
   fetchExchangeRates,
   formatConvertedPrice,
   normalizeCurrency,
@@ -131,9 +130,12 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const foundCountry = countriesData.find(c => c.id === savedCountryId) || defaultCountry;
       setSelectedCountryState(foundCountry);
       if (!localStorage.getItem('zando_currency_manual')) {
+        // Use the selected country as the initial fallback. The IP lookup below
+        // then replaces it with any ISO currency returned for the visitor,
+        // including GBP, CAD, JPY and other currencies outside Africa.
+        const countryCurrency = foundCountry ? normalizeCurrency(foundCountry.currency) : null;
         const configuredDefault = normalizeCurrency(settingsData.default_display_currency);
-        if (configuredDefault) setSelectedCurrencyState(configuredDefault);
-        else if (foundCountry) setSelectedCurrencyState(normalizeCurrency(foundCountry.currency) || 'FCFA');
+        setSelectedCurrencyState(countryCurrency || configuredDefault || 'FCFA');
       }
     };
     void initData();
@@ -143,7 +145,7 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setSelectedCountry = (country: Country) => { setSelectedCountryState(country); localStorage.setItem('zando_selected_country', country.id); };
   const setSelectedCurrency = (currency: string) => {
     const normalized = normalizeCurrency(currency);
-    if (!normalized || !DISPLAY_CURRENCIES.includes(normalized)) return;
+    if (!normalized) return;
     setSelectedCurrencyState(normalized); localStorage.setItem('zando_display_currency', normalized); localStorage.setItem('zando_currency_manual', '1');
   };
   const formatPrice = (amount: number, sourceCurrency: string) => formatConvertedPrice(amount, sourceCurrency, selectedCurrencyState, exchangeRates);

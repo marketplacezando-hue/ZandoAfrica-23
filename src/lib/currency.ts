@@ -1,4 +1,5 @@
-export type DisplayCurrency = 'FCFA' | 'CDF' | 'EUR' | 'USD';
+/** ISO 4217 code used for display. FCFA is the friendly label for XAF/XOF. */
+export type DisplayCurrency = string;
 export const DISPLAY_CURRENCIES: DisplayCurrency[] = ['FCFA', 'CDF', 'EUR', 'USD'];
 
 export type ExchangeRates = {
@@ -19,7 +20,9 @@ const CURRENCY_ALIASES: Record<string, DisplayCurrency> = {
 };
 
 export function normalizeCurrency(value: string | null | undefined): DisplayCurrency | null {
-  return CURRENCY_ALIASES[String(value || '').trim().toUpperCase()] || null;
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!/^(?:[A-Z]{3}|FCFA)$/.test(normalized)) return null;
+  return CURRENCY_ALIASES[normalized] || normalized;
 }
 
 export function currencyLabel(currency: DisplayCurrency): string {
@@ -27,7 +30,7 @@ export function currencyLabel(currency: DisplayCurrency): string {
 }
 
 export function currencyFractionDigits(currency: DisplayCurrency): number {
-  return currency === 'EUR' || currency === 'USD' ? 2 : 0;
+  return new Set(['FCFA', 'CDF', 'JPY', 'KRW', 'VND', 'CLP', 'PYG', 'RWF', 'UGX', 'TZS']).has(currency) ? 0 : 2;
 }
 
 export function readCachedExchangeRates(): ExchangeRates | null {
@@ -36,7 +39,7 @@ export function readCachedExchangeRates(): ExchangeRates | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ExchangeRates;
     if (parsed.base !== 'USD' || !Number.isFinite(parsed.fetchedAt) || Date.now() - parsed.fetchedAt > RATE_MAX_AGE_MS) return null;
-    if (!parsed.rates || !Number.isFinite(parsed.rates.EUR) || !Number.isFinite(parsed.rates.CDF) || !Number.isFinite(parsed.rates.XAF) || !Number.isFinite(parsed.rates.XOF)) return null;
+    if (!parsed.rates || !Number.isFinite(parsed.rates.USD) || !Number.isFinite(parsed.rates.CDF) || !Number.isFinite(parsed.rates.XAF) || !Number.isFinite(parsed.rates.XOF)) return null;
     return parsed;
   } catch {
     return null;
@@ -48,7 +51,7 @@ export async function fetchExchangeRates(signal?: AbortSignal): Promise<Exchange
   if (!response.ok) throw new Error(`exchange_rates_http_${response.status}`);
   const payload = await response.json() as { result?: string; rates?: Record<string, number> };
   const rates = payload.rates;
-  if (payload.result !== 'success' || !rates || !['EUR', 'CDF', 'XAF', 'XOF'].every(code => Number.isFinite(rates[code]))) {
+  if (payload.result !== 'success' || !rates || !['USD', 'CDF', 'XAF', 'XOF'].every(code => Number.isFinite(rates[code]))) {
     throw new Error('exchange_rates_incomplete');
   }
   const result: ExchangeRates = { base: 'USD', rates, fetchedAt: Date.now() };
