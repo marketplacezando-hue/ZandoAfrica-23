@@ -4,7 +4,7 @@ import PageMeta from "@/components/common/PageMeta";
 export default function NotFound() {
   return (
     <>
-      <PageMeta title="Page Not Found" description="" />
+      <PageMeta title="Page introuvable | Zando Africa" description="La page demandée n’existe pas sur Zando Africa." indexable={false} />
       <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">
         <div className="mx-auto w-full max-w-[242px] text-center sm:max-w-[472px]">
           <h1 className="mb-8 font-bold text-gray-800 text-title-md dark:text-white/90 xl:text-title-2xl">

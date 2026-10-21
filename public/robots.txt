@@ -1,5 +1,12 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /publier
+Disallow: /passer-pub
+Disallow: /abonnement
+Disallow: /paiement/
+Disallow: /verifier-code
+Disallow: /favoris
+Disallow: /api/
 
-Host: https://zando-africa.vercel.app
+Sitemap: https://zando-africa.vercel.app/sitemap.xml

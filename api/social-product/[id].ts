@@ -110,5 +110,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  if (!product) {
+    res.status(404)
+      .setHeader('Content-Type', 'text/html; charset=utf-8')
+      .setHeader('X-Robots-Tag', 'noindex, nofollow')
+      .send('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><title>Annonce introuvable | Zando Africa</title></head><body><h1>Annonce introuvable</h1><p>Cette annonce n’existe pas ou n’est plus publiée.</p></body></html>');
+    return;
+  }
+
   res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600').send(renderSocialHtml(product, productId, siteUrl));
 }
