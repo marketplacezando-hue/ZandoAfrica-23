@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { ADMIN_LOGIN_GESTURE_EVENT, handleZandoLogoClick } from '@/lib/zandoLogoGesture';
@@ -8,17 +8,21 @@ import { countryCodeToFlag } from '@/lib/locale';
 import {
   Menu,
   X,
+  Home,
   ShoppingBag,
   Megaphone,
+  CirclePlus,
   CreditCard,
   KeyRound,
   Heart,
   Info,
   ShieldCheck,
   ChevronDown,
+  Search,
+  Globe,
+  MessageSquarePlus,
   Lock,
-  Mail,
-  Flame
+  Mail
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -49,14 +53,18 @@ export const PublicHeader: React.FC = () => {
   } = useZando();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [menuSearchQuery, setMenuSearchQuery] = useState('');
+  const [manualCountrySelection, setManualCountrySelection] = useState(() => Boolean(localStorage.getItem('zando_selected_country')));
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminLoading, setAdminLoading] = useState(false);
 
   const navigate = useNavigate();
-  const displayCountryCode = visitorCountry?.code || selectedCountry?.id;
-  const displayCountryName = visitorCountry?.name || selectedCountry?.name || 'Pays';
+  const location = useLocation();
+  const displayCountryCode = manualCountrySelection ? selectedCountry?.id : visitorCountry?.code || selectedCountry?.id;
+  const displayCountryName = manualCountrySelection ? selectedCountry?.name || 'Pays' : visitorCountry?.name || selectedCountry?.name || 'Pays';
 
   React.useEffect(() => {
     const showAdminLogin = () => setAdminModalOpen(true);
@@ -66,6 +74,21 @@ export const PublicHeader: React.FC = () => {
 
   const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     handleZandoLogoClick(event, navigate);
+  };
+
+  const handleMenuSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = menuSearchQuery.trim();
+    setMobileMenuOpen(false);
+    setCountryPickerOpen(false);
+    navigate(query ? `/?q=${encodeURIComponent(query)}#dernieres-annonces` : '/#dernieres-annonces');
+  };
+
+  const handleCountrySelect = (country: (typeof countries)[number]) => {
+    setSelectedCountry(country);
+    setManualCountrySelection(true);
+    setCountryPickerOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
@@ -122,7 +145,7 @@ export const PublicHeader: React.FC = () => {
                   type="button"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer text-foreground"
                 >
-                  {visitorCountry ? <span className="text-base leading-none" aria-label={`Drapeau de ${visitorCountry.name}`}>{countryCodeToFlag(visitorCountry.code)}</span> : displayCountryCode ? <CountryFlag countryId={displayCountryCode} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
+                  {!manualCountrySelection && visitorCountry ? <span className="text-base leading-none" aria-label={`Drapeau de ${visitorCountry.name}`}>{countryCodeToFlag(visitorCountry.code)}</span> : displayCountryCode ? <CountryFlag countryId={displayCountryCode} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
                   <span className="hidden sm:inline max-w-[120px] truncate text-foreground">{displayCountryName}</span>
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -132,7 +155,7 @@ export const PublicHeader: React.FC = () => {
                 {countries.map(c => (
                   <DropdownMenuItem
                     key={c.id}
-                    onClick={() => setSelectedCountry(c)}
+                    onClick={() => { setSelectedCountry(c); setManualCountrySelection(true); }}
                     className={`flex items-center justify-between cursor-pointer py-2 px-2.5 rounded-md ${
                       selectedCountry?.id === c.id ? 'bg-primary/10 text-primary font-medium' : ''
                     }`}
@@ -174,16 +197,17 @@ export const PublicHeader: React.FC = () => {
               <SheetTrigger asChild>
                 <button
                   type="button"
+                  aria-label="Ouvrir le menu"
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-emerald-700 bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-extrabold cursor-pointer transition-all shadow-xs active:scale-95"
                 >
                   <Menu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span className="hidden sm:inline">Menu</span>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between">
-                <div>
-                  <SheetHeader className="p-4 border-b text-left">
-                    <div className="flex items-center justify-between">
+              <SheetContent side="right" hideClose className="h-dvh max-h-dvh w-[min(90vw,400px)] max-w-[90vw] overflow-hidden border-l border-slate-200 bg-white p-0 text-slate-900 shadow-2xl">
+                <div className="flex h-full min-h-0 flex-col">
+                  <SheetHeader className="shrink-0 border-b border-slate-200 px-5 py-4 text-left">
+                    <div className="flex items-center justify-between gap-4">
                       <Link
                         to="/"
                         onClick={event => {
@@ -191,97 +215,134 @@ export const PublicHeader: React.FC = () => {
                           handleLogoClick(event);
                         }}
                         aria-label="Zando Africa — Retour à l'accueil"
-                        className="inline-flex"
+                        className="inline-flex min-w-0"
                       >
-                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-8 object-contain" />
+                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-9 max-w-[190px] object-contain object-left" />
                       </Link>
                       <button
                         type="button"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="p-1 rounded-md text-muted-foreground hover:text-foreground"
+                        aria-label="Fermer le menu"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-emerald-600 text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="h-5 w-5" />
                       </button>
                     </div>
-                    <SheetTitle className="text-xs text-muted-foreground font-normal mt-1">
-                      Menu de navigation Zando Africa
-                    </SheetTitle>
+                    <SheetTitle className="sr-only">Menu de navigation Zando Africa</SheetTitle>
                   </SheetHeader>
 
-                  {/* Framed Menu Items with DEEP, PRONOUNCED, HIGH-CONTRAST COLORS (Requirement 4 & 1) */}
-                  <nav className="p-4 space-y-3">
-                    {/* Item 1: Publier */}
-                    <Link
-                      to="/publier"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-amber-600 bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 dark:text-amber-100 text-sm font-bold transition-all shadow-xs"
-                    >
-                      <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0" />
-                      <span>1. Publier un produit</span>
-                    </Link>
-
-                    {/* Item 2: PUB VIP */}
-                    <Link
-                      to="/passer-pub"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-blue-600 bg-blue-500/10 hover:bg-blue-500/20 text-blue-950 dark:text-blue-100 text-sm font-bold transition-all shadow-xs"
-                    >
-                      <Megaphone className="w-5 h-5 text-blue-600 shrink-0" />
-                      <span>2. Passer une PUB VIP</span>
-                    </Link>
-
-                    {/* Item 3: Favoris - Accessible UNIQUEMENT depuis le menu (Requirement 1 & 4) */}
-                    <Link
-                      to="/favoris"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between p-3 rounded-xl border-2 border-rose-600 bg-rose-500/10 hover:bg-rose-500/20 text-rose-950 dark:text-rose-100 text-sm font-bold transition-all shadow-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Heart className="w-5 h-5 text-rose-600 fill-rose-600/30 shrink-0" />
-                        <span>3. Mes Favoris</span>
+                  <div className="shrink-0 space-y-4 border-b border-slate-200 px-5 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        {!manualCountrySelection && visitorCountry ? (
+                          <span className="text-2xl leading-none" aria-label={`Drapeau de ${displayCountryName}`}>{countryCodeToFlag(displayCountryCode || '')}</span>
+                        ) : displayCountryCode ? (
+                          <CountryFlag countryId={displayCountryCode} className="h-6 w-9 shrink-0 rounded-sm" />
+                        ) : (
+                          <Globe className="h-6 w-6 shrink-0 text-slate-500" aria-hidden="true" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Pays actuel</p>
+                          <p className="truncate text-sm font-bold text-slate-900">{displayCountryName}</p>
+                        </div>
                       </div>
-                      {favorites.length > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-rose-600 text-white">
-                          {favorites.length}
-                        </span>
-                      )}
-                    </Link>
+                      <DropdownMenu open={countryPickerOpen} onOpenChange={setCountryPickerOpen}>
+                        <DropdownMenuTrigger asChild>
+                          <button type="button" className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                            Changer
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="z-[70] max-h-[60vh] w-64 overflow-y-auto p-1">
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Sélectionner votre pays</div>
+                          {countries.map(country => (
+                            <DropdownMenuItem
+                              key={country.id}
+                              onClick={() => handleCountrySelect(country)}
+                              className={`flex cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-2 ${selectedCountry?.id === country.id ? 'bg-primary/10 font-medium text-primary' : ''}`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <CountryFlag countryId={country.id} className="h-[18px] w-[27px] shrink-0" />
+                                <span className="truncate text-sm">{country.name}</span>
+                              </span>
+                              <span className="shrink-0 text-xs text-muted-foreground">{country.currency}</span>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
 
-                    {/* Item 4: Abonnement vendeur */}
-                    <Link
-                      to="/abonnement"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-emerald-700 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-950 dark:text-emerald-100 text-sm font-bold transition-all shadow-xs"
-                    >
-                      <CreditCard className="w-5 h-5 text-emerald-700 shrink-0" />
-                      <span>4. Abonnement Vendeur</span>
-                    </Link>
+                    <form onSubmit={handleMenuSearch} className="relative">
+                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                      <Input
+                        type="search"
+                        aria-label="Rechercher un produit"
+                        placeholder="Rechercher un produit…"
+                        value={menuSearchQuery}
+                        onChange={event => setMenuSearchQuery(event.target.value)}
+                        className="h-12 rounded-2xl border border-slate-200 bg-white pl-11 text-sm text-slate-900 shadow-sm placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-emerald-600"
+                      />
+                    </form>
+                  </div>
 
-                    {/* Item 5: Code Promo */}
+                  <nav aria-label="Navigation principale" className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-5">
                     <Link
-                      to="/verifier-code"
+                      to="/"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-purple-600 bg-purple-500/10 hover:bg-purple-500/20 text-purple-950 dark:text-purple-100 text-sm font-bold transition-all shadow-xs"
+                      aria-current={location.pathname === '/' && !location.hash ? 'page' : undefined}
+                      className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition-colors ${location.pathname === '/' && !location.hash ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
                     >
-                      <KeyRound className="w-5 h-5 text-purple-600 shrink-0" />
-                      <span>5. Vérifier mon Code Promo</span>
+                      <Home className="h-6 w-6 shrink-0" />
+                      <span>Accueil</span>
                     </Link>
+                    <Link
+                      to="/#dernieres-annonces"
+                      onClick={() => setMobileMenuOpen(false)}
+                      aria-current={location.pathname === '/' && location.hash === '#dernieres-annonces' ? 'location' : undefined}
+                      className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition-colors ${location.pathname === '/' && location.hash === '#dernieres-annonces' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
+                    >
+                      <ShoppingBag className="h-6 w-6 shrink-0" />
+                      <span>Produits</span>
+                    </Link>
+                    <Link to="/passer-pub" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <Megaphone className="h-6 w-6 shrink-0" />
+                      <span>Passez une pub</span>
+                    </Link>
+                    <Link to="/publier" onClick={() => setMobileMenuOpen(false)} className="flex min-h-16 items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-red-700">
+                      <CirclePlus className="h-6 w-6 shrink-0" />
+                      <span>Vendre un article</span>
+                    </Link>
+                    <Link to="/abonnement" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <CreditCard className="h-6 w-6 shrink-0" />
+                      <span>Abonnement</span>
+                    </Link>
+                    <Link to="/a-propos" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <Info className="h-6 w-6 shrink-0" />
+                      <span>À propos</span>
+                    </Link>
+                    <Link to="/a-propos#contact" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-base font-semibold text-orange-600 transition-colors hover:bg-orange-100">
+                      <MessageSquarePlus className="h-6 w-6 shrink-0" />
+                      <span>Donner votre avis</span>
+                    </Link>
+                    <button type="button" onClick={() => setCountryPickerOpen(true)} className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800">
+                      <Globe className="h-6 w-6 shrink-0" />
+                      <span>Choisir le pays</span>
+                    </button>
 
-                    {/* Item 6: A propos */}
-                    <Link
-                      to="/a-propos"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 border-teal-700 bg-teal-600/10 hover:bg-teal-600/20 text-teal-950 dark:text-teal-100 text-sm font-bold transition-all shadow-xs"
-                    >
-                      <Info className="w-5 h-5 text-teal-700 shrink-0" />
-                      <span>6. À propos & Sécurité</span>
-                    </Link>
+                    <div className="space-y-1 border-t border-slate-200 pt-3">
+                      <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Autres raccourcis</p>
+                      <Link to="/favoris" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center justify-between rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                        <span className="flex items-center gap-3"><Heart className="h-5 w-5 shrink-0" />Mes favoris</span>
+                        {favorites.length > 0 && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">{favorites.length}</span>}
+                      </Link>
+                      <Link to="/verifier-code" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                        <KeyRound className="h-5 w-5 shrink-0" />
+                        Vérifier un code promo
+                      </Link>
+                    </div>
                   </nav>
-                </div>
 
-                <div className="p-4 border-t bg-muted/30 text-center">
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Zando Africa • Marketplace panafricaine
+                  <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-3 text-center text-xs font-medium text-slate-500">
+                    Zando Africa · Marketplace panafricaine
                   </div>
                 </div>
               </SheetContent>

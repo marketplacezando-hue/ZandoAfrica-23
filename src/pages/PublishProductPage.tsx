@@ -26,6 +26,7 @@ import { createMonerooPayment } from '@/services/monerooPayments';
 import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
 import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
 import { normalizeProductCoverImage, normalizeSellerAvatarImage } from '@/lib/productImages';
+import { MAX_IMAGE_UPLOAD_BYTES, validateImageFile } from '@/lib/imageValidation';
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -52,9 +53,11 @@ export const PublishProductPage: React.FC = () => {
   const [externalUrl, setExternalUrl] = useState('');
 
   // Step 2: Media & Profil Vendeur
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [pendingPhotoPreviews, setPendingPhotoPreviews] = useState<Array<{ id: string; url: string; name: string; size: number }>>([]);
   const [sellerPhotoUrl, setSellerPhotoUrl] = useState<string>('');
+  const [sellerPhotoPreviewUrl, setSellerPhotoPreviewUrl] = useState('');
+  const [sellerPhotoFileInfo, setSellerPhotoFileInfo] = useState('');
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -118,27 +121,46 @@ export const PublishProductPage: React.FC = () => {
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files).slice(0, 4 - photoUrls.length);
+    e.target.value = '';
     if (files.length === 0) return;
 
     setUploadingPhotos(true);
     const uploadedUrls: string[] = [];
 
-    for (const [index, originalFile] of files.entries()) {
-      let file = originalFile;
-      if (photoUrls.length === 0 && index === 0) {
-        try {
+    for (const originalFile of files) {
+      if (originalFile.size > MAX_IMAGE_UPLOAD_BYTES) {
+        toast.error(`« ${originalFile.name} » : la photo ne doit pas dépasser 2 Mo.`);
+        continue;
+      }
+      const validationError = await validateImageFile(originalFile);
+      if (validationError) {
+        toast.error(`« ${originalFile.name} » : ${validationError}`);
+        continue;
+      }
+
+      const previewUrl = URL.createObjectURL(originalFile);
+      const previewId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setPendingPhotoPreviews(previous => [...previous, { id: previewId, url: previewUrl, name: originalFile.name, size: originalFile.size }]);
+
+      try {
+        let file = originalFile;
+        if (photoUrls.length === 0 && uploadedUrls.length === 0) {
           file = await normalizeProductCoverImage(originalFile);
           toast.info('La photo de couverture est adaptée au format portrait 1024 × 1536.');
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : 'La couverture n’a pas pu être préparée.');
-          continue;
         }
-      }
-      const result = await zandoApi.uploadMedia(file, 'products');
-      if (result.url) {
-        uploadedUrls.push(result.url);
-      } else {
-        toast.error(`Impossible de téléverser ${file.name}. ${result.error || 'Réessayez.'}`);
+        const result = await zandoApi.uploadMedia(file, 'products');
+        if (result.url) {
+          uploadedUrls.push(result.url);
+        } else {
+          toast.error(`Impossible de téléverser ${file.name}. ${result.error || 'Réessayez.'}`);
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'La photo n’a pas pu être préparée ou téléversée.');
+      } finally {
+        URL.revokeObjectURL(previewUrl);
+        setPendingPhotoPreviews(previous => previous.filter(preview => preview.id !== previewId));
       }
     }
 
@@ -171,25 +193,42 @@ export const PublishProductPage: React.FC = () => {
   const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const originalFile = e.target.files[0];
+    e.target.value = '';
+    if (originalFile.size > MAX_IMAGE_UPLOAD_BYTES) {
+      toast.error('La photo ne doit pas dépasser 2 Mo.');
+      return;
+    }
+    const validationError = await validateImageFile(originalFile);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(originalFile);
+    const previousFileInfo = sellerPhotoFileInfo;
+    setSellerPhotoPreviewUrl(previewUrl);
+    setSellerPhotoFileInfo(`${originalFile.name} · ${(originalFile.size / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} Mio`);
     setUploadingAvatar(true);
     toast.info('Chargement de votre photo de profil...');
 
-    let file: File;
     try {
-      file = await normalizeSellerAvatarImage(originalFile);
+      const file = await normalizeSellerAvatarImage(originalFile);
+      const result = await zandoApi.uploadMedia(file, 'avatars');
+      if (result.url) {
+        setSellerPhotoUrl(result.url);
+        toast.success('Photo de profil vendeur mise à jour !');
+      } else {
+        setSellerPhotoFileInfo(previousFileInfo);
+        toast.error(result.error || 'La photo de profil n’a pas été téléversée. Réessayez avant de continuer.');
+      }
     } catch (error) {
+      setSellerPhotoFileInfo(previousFileInfo);
       toast.error(error instanceof Error ? error.message : 'Ce format d’image ne peut pas être lu par le navigateur.');
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setSellerPhotoPreviewUrl('');
       setUploadingAvatar(false);
-      return;
     }
-    const result = await zandoApi.uploadMedia(file, 'avatars');
-    if (result.url) {
-      setSellerPhotoUrl(result.url);
-      toast.success('Photo de profil vendeur mise à jour !');
-    } else {
-      toast.error(result.error || 'La photo de profil n’a pas été téléversée. Réessayez avant de continuer.');
-    }
-    setUploadingAvatar(false);
   };
 
   const handleDigitalBookSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,6 +362,10 @@ export const PublishProductPage: React.FC = () => {
 
   // Final Publish Handler
   const handleFinalPublish = async () => {
+    if (uploadingPhotos || uploadingAvatar) {
+      toast.error('Attendez la fin de la vérification et du téléversement des photos avant de publier.');
+      return;
+    }
     setSubmitting(true);
     try {
       // Les champs historiques dimensions/options restent en base pour les annonces existantes;
@@ -617,12 +660,13 @@ export const PublishProductPage: React.FC = () => {
               </label>
 
               <div className="flex items-center gap-4">
-                {sellerPhotoUrl ? (
+                {sellerPhotoPreviewUrl || sellerPhotoUrl ? (
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-primary shadow-xs">
-                    <img src={sellerPhotoUrl} alt="Profil vendeur" className="w-full h-full object-cover" />
+                    <img src={sellerPhotoPreviewUrl || sellerPhotoUrl} alt="Aperçu de la photo du vendeur" className="w-full h-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => setSellerPhotoUrl('')}
+                      onClick={() => { setSellerPhotoUrl(''); setSellerPhotoFileInfo(''); }}
+                      disabled={uploadingAvatar}
                       className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                       title="Changer"
                     >
@@ -641,16 +685,17 @@ export const PublishProductPage: React.FC = () => {
                     <span>Choisir ma photo de profil</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                       onChange={handleAvatarSelect}
                       className="hidden"
                       disabled={uploadingAvatar}
                     />
                   </label>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Permet aux acheteurs de reconnaître votre boutique ou visage pour plus de confiance.
+                    JPG/JPEG, PNG, WebP, GIF ou AVIF · 2 Mo maximum. Permet aux acheteurs de reconnaître votre boutique.
                   </p>
                   {uploadingAvatar && <p className="text-[11px] text-primary font-semibold animate-pulse">Téléversement de la photo de profil...</p>}
+                  {sellerPhotoFileInfo && <p className="mt-1 break-all text-[11px] text-muted-foreground">{sellerPhotoFileInfo}</p>}
                 </div>
               </div>
             </div>
@@ -679,14 +724,26 @@ export const PublishProductPage: React.FC = () => {
                   </div>
                 ))}
 
-                {photoUrls.length < 4 && (
+                {pendingPhotoPreviews.map((preview, index) => (
+                  <div key={preview.id} className="relative aspect-square overflow-hidden rounded-xl border border-emerald-300 bg-muted">
+                    <img src={preview.url} alt={`Aperçu de ${preview.name}`} className="h-full w-full object-cover" />
+                    <span className="absolute left-1.5 top-1.5 rounded bg-black/65 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {photoUrls.length === 0 && index === 0 ? 'Photo principale' : 'Vérification…'}
+                    </span>
+                    <span className="absolute inset-x-0 bottom-0 truncate bg-black/65 px-2 py-1 text-[10px] text-white">
+                      {preview.name} · {(preview.size / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} Mio
+                    </span>
+                  </div>
+                ))}
+
+                {photoUrls.length + pendingPhotoPreviews.length < 4 && (
                   <label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-colors bg-muted/20 hover:bg-primary/5">
                     <Upload className="w-6 h-6 text-muted-foreground mb-1" />
                     <span className="text-xs font-semibold text-foreground">Ajouter photo</span>
                     <span className="text-[10px] text-muted-foreground">Depuis la galerie</span>
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                       multiple
                       onChange={handlePhotoSelect}
                       className="hidden"
@@ -695,6 +752,9 @@ export const PublishProductPage: React.FC = () => {
                   </label>
                 )}
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Formats acceptés : JPG/JPEG, PNG, WebP, GIF et AVIF · 2 Mo maximum par photo. Chaque image est vérifiée avant l’envoi ; la version optimisée respecte aussi le plafond de 2 Mo.
+              </p>
               {uploadingPhotos && <p className="text-xs text-primary font-medium animate-pulse">Téléversement des photos en cours...</p>}
             </div>
 

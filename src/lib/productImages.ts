@@ -1,5 +1,20 @@
+import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/imageValidation';
+
 const COVER_WIDTH = 1024;
 const COVER_HEIGHT = 1536;
+
+async function toJpegBlob(canvas: HTMLCanvasElement, initialQuality: number): Promise<Blob> {
+  for (const quality of [initialQuality, 0.84, 0.76, 0.68, 0.58, 0.48, 0.38]) {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(result => {
+        if (result) resolve(result);
+        else reject(new Error('Impossible de préparer la photo.'));
+      }, 'image/jpeg', quality);
+    });
+    if (blob.size <= MAX_IMAGE_UPLOAD_BYTES) return blob;
+  }
+  throw new Error('La photo préparée dépasse encore la limite de 2 Mo. Choisissez une image plus simple.');
+}
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -44,12 +59,7 @@ export async function normalizeProductCoverImage(file: File): Promise<File> {
   context.imageSmoothingQuality = 'high';
   context.drawImage(image, x, y, width, height);
 
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(result => {
-      if (result) resolve(result);
-      else reject(new Error('Impossible de préparer la couverture.'));
-    }, 'image/jpeg', 0.92);
-  });
+  const blob = await toJpegBlob(canvas, 0.92);
 
   const baseName = file.name.replace(/\.[^.]+$/, '') || 'couverture';
   return new File([blob], `${baseName}-1024x1536.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
@@ -67,9 +77,7 @@ export async function normalizeSellerAvatarImage(file: File): Promise<File> {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Le traitement de la photo est indisponible sur cet appareil.');
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(result => result ? resolve(result) : reject(new Error('Impossible de préparer la photo.')), 'image/jpeg', 0.9);
-  });
+  const blob = await toJpegBlob(canvas, 0.9);
   const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo-vendeur';
   return new File([blob], `${baseName}-avatar.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
 }
