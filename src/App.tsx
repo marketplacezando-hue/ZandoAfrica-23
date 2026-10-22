@@ -1,46 +1,54 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import IntersectObserver from '@/components/common/IntersectObserver';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { Toaster } from '@/components/ui/sonner';
 import { ZandoProvider } from '@/contexts/ZandoContext';
 
-// Public Layout & Pages
+// Keep the home route in the initial bundle; defer heavy and infrequently visited pages.
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { HomePage } from '@/pages/HomePage';
-import { ProductDetailPage } from '@/pages/ProductDetailPage';
-import { PublishProductPage } from '@/pages/PublishProductPage';
-import { BannerAdPage } from '@/pages/BannerAdPage';
-import { SubscriptionPage } from '@/pages/SubscriptionPage';
-import { PaymentReturnPage } from '@/pages/PaymentReturnPage';
-import { VerifyCodePage } from '@/pages/VerifyCodePage';
-import { FavoritesPage } from '@/pages/FavoritesPage';
 import { AboutPage } from '@/pages/AboutPage';
-
-// Admin
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { AdminDashboard } from '@/pages/admin/AdminDashboard';
-import { AdminProducts } from '@/pages/admin/AdminProducts';
-import { AdminReviews } from '@/pages/admin/AdminReviews';
-import { AdminBanners } from '@/pages/admin/AdminBanners';
-import { AdminSubscriptions } from '@/pages/admin/AdminSubscriptions';
-import { AdminPromoCodes } from '@/pages/admin/AdminPromoCodes';
-import { AdminFinances } from '@/pages/admin/AdminFinances';
-import { AdminTraffic } from '@/pages/admin/AdminTraffic';
-import { AdminTraceability } from '@/pages/admin/AdminTraceability';
-import { AdminAuditLogs } from '@/pages/admin/AdminAuditLogs';
-import { AdminSettings } from '@/pages/admin/AdminSettings';
 
-const App: React.FC = () => {
-  return (
-    <Router basename={import.meta.env.BASE_URL}>
-      <ZandoProvider>
-        <ScrollToTop />
-        <IntersectObserver />
-        <div className="flex flex-col min-h-screen">
-          <main className="flex-grow">
+const lazyNamed = (loader: () => Promise<Record<string, unknown>>, exportName: string) => lazy(async () => ({
+  default: (await loader())[exportName] as React.ComponentType
+}));
+
+const ProductDetailPage = lazyNamed(() => import('@/pages/ProductDetailPage'), 'ProductDetailPage');
+const PublishProductPage = lazyNamed(() => import('@/pages/PublishProductPage'), 'PublishProductPage');
+const BannerAdPage = lazyNamed(() => import('@/pages/BannerAdPage'), 'BannerAdPage');
+const SubscriptionPage = lazyNamed(() => import('@/pages/SubscriptionPage'), 'SubscriptionPage');
+const PaymentReturnPage = lazyNamed(() => import('@/pages/PaymentReturnPage'), 'PaymentReturnPage');
+const VerifyCodePage = lazyNamed(() => import('@/pages/VerifyCodePage'), 'VerifyCodePage');
+const FavoritesPage = lazyNamed(() => import('@/pages/FavoritesPage'), 'FavoritesPage');
+const AdminDashboard = lazyNamed(() => import('@/pages/admin/AdminDashboard'), 'AdminDashboard');
+const AdminProducts = lazyNamed(() => import('@/pages/admin/AdminProducts'), 'AdminProducts');
+const AdminReviews = lazyNamed(() => import('@/pages/admin/AdminReviews'), 'AdminReviews');
+const AdminBanners = lazyNamed(() => import('@/pages/admin/AdminBanners'), 'AdminBanners');
+const AdminSubscriptions = lazyNamed(() => import('@/pages/admin/AdminSubscriptions'), 'AdminSubscriptions');
+const AdminPromoCodes = lazyNamed(() => import('@/pages/admin/AdminPromoCodes'), 'AdminPromoCodes');
+const AdminFinances = lazyNamed(() => import('@/pages/admin/AdminFinances'), 'AdminFinances');
+const AdminTraffic = lazyNamed(() => import('@/pages/admin/AdminTraffic'), 'AdminTraffic');
+const AdminTraceability = lazyNamed(() => import('@/pages/admin/AdminTraceability'), 'AdminTraceability');
+const AdminAuditLogs = lazyNamed(() => import('@/pages/admin/AdminAuditLogs'), 'AdminAuditLogs');
+const AdminSettings = lazyNamed(() => import('@/pages/admin/AdminSettings'), 'AdminSettings');
+
+const PageLoading = () => (
+  <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-muted-foreground" role="status">
+    Chargement…
+  </div>
+);
+
+const App: React.FC = () => (
+  <Router basename={import.meta.env.BASE_URL}>
+    <ZandoProvider>
+      <ScrollToTop />
+      <IntersectObserver />
+      <div className="flex min-h-screen flex-col">
+        <main className="flex-grow">
+          <Suspense fallback={<PageLoading />}>
             <Routes>
-              {/* Public Marketplace Routes */}
               <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
               <Route path="/produit/:id" element={<PublicLayout><ProductDetailPage /></PublicLayout>} />
               <Route path="/publier" element={<PublicLayout><PublishProductPage /></PublicLayout>} />
@@ -50,8 +58,6 @@ const App: React.FC = () => {
               <Route path="/verifier-code" element={<PublicLayout><VerifyCodePage /></PublicLayout>} />
               <Route path="/favoris" element={<PublicLayout><FavoritesPage /></PublicLayout>} />
               <Route path="/a-propos" element={<PublicLayout><AboutPage /></PublicLayout>} />
-
-              {/* Admin Portal Nested Routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
@@ -66,16 +72,14 @@ const App: React.FC = () => {
                 <Route path="audit" element={<AdminAuditLogs />} />
                 <Route path="parametres" element={<AdminSettings />} />
               </Route>
-
-              {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </main>
-        </div>
-        <Toaster position="top-right" richColors />
-      </ZandoProvider>
-    </Router>
-  );
-};
+          </Suspense>
+        </main>
+      </div>
+      <Toaster position="top-right" richColors />
+    </ZandoProvider>
+  </Router>
+);
 
 export default App;

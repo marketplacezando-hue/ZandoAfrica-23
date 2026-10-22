@@ -38,6 +38,7 @@ export const HomePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
 
   const popularScrollRef = useRef<HTMLDivElement>(null);
+  const realtimeReloadTimerRef = useRef<number | null>(null);
   const [isPopularPaused, setIsPopularPaused] = useState(false);
 
   // Défilement continu horizontal pour les produits populaires
@@ -107,8 +108,13 @@ export const HomePage: React.FC = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'products' },
         () => {
-          // Actualisation instantanée silencieuse en direct
-          loadData(true);
+          // Regrouper les rafales d’événements (publication, vues, mise à jour)
+          // en une seule requête silencieuse.
+          if (realtimeReloadTimerRef.current !== null) window.clearTimeout(realtimeReloadTimerRef.current);
+          realtimeReloadTimerRef.current = window.setTimeout(() => {
+            realtimeReloadTimerRef.current = null;
+            void loadData(true);
+          }, 600);
         }
       )
       .on(
@@ -123,6 +129,7 @@ export const HomePage: React.FC = () => {
       .subscribe();
 
     return () => {
+      if (realtimeReloadTimerRef.current !== null) window.clearTimeout(realtimeReloadTimerRef.current);
       channel.unsubscribe();
     };
   }, [selectedCountry?.id, selectedCategory, appliedSearchQuery]);

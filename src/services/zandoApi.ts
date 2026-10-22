@@ -14,6 +14,8 @@ import type {
   ProductReview
 } from '@/types/zando';
 
+const PRODUCT_LIST_SELECT = 'id,title,description,price,currency,category_id,country_id,city,seller_name,seller_phone,photos,duration_days,status,is_popular,views_count,calls_count,whatsapp_clicks_count,published_at,expires_at,created_at,updated_at,countries(*),categories(*)';
+
 function getVisitorId(): string {
   const storageKey = 'zando_visitor_id';
   try {
@@ -127,10 +129,12 @@ export const zandoApi = {
     isPopular?: boolean;
     status?: string;
     limit?: number;
+    excludeCountryId?: string;
+    summary?: boolean;
   }): Promise<Product[]> {
     let query = supabase
       .from('products')
-      .select('*, countries(*), categories(*)')
+      .select(params?.summary ? PRODUCT_LIST_SELECT : '*, countries(*), categories(*)')
       .order('created_at', { ascending: false });
 
     if (params?.status) {
@@ -141,6 +145,10 @@ export const zandoApi = {
 
     if (params?.countryId && params.countryId !== 'ALL') {
       query = query.eq('country_id', params.countryId);
+    }
+
+    if (params?.excludeCountryId && params.excludeCountryId !== 'ALL') {
+      query = query.neq('country_id', params.excludeCountryId);
     }
 
     if (params?.categoryId && params.categoryId !== 'all') {
@@ -164,7 +172,7 @@ export const zandoApi = {
       console.error('Error fetching products:', error);
       return [];
     }
-    return data || [];
+    return (data || []) as unknown as Product[];
   },
 
   /**
@@ -176,75 +184,36 @@ export const zandoApi = {
     search?: string;
     limit?: number;
   }): Promise<{ products: Product[]; popular: Product[] }> {
-    const allProducts = await this.getProducts({
+    const targetCountryId = params?.countryId && params.countryId !== 'ALL' ? params.countryId : null;
+    const totalToTake = Math.min(params?.limit || 24, 48);
+    const localLimit = targetCountryId ? Math.ceil(totalToTake * 0.75) : totalToTake;
+    const foreignLimit = targetCountryId ? totalToTake - localLimit : 0;
+    const common = {
       categoryId: params?.categoryId,
       search: params?.search,
-      status: 'published'
-    });
+      status: 'published' as const,
+      summary: true
+    };
 
-    const targetCountryId = params?.countryId && params.countryId !== 'ALL' ? params.countryId : null;
+    const [localProducts, foreignProducts, popularProducts] = await Promise.all([
+      this.getProducts({ ...common, countryId: targetCountryId || undefined, limit: localLimit }),
+      targetCountryId
+        ? this.getProducts({ ...common, excludeCountryId: targetCountryId, limit: foreignLimit })
+        : Promise.resolve([] as Product[]),
+      this.getProducts({ ...common, isPopular: true, limit: 8 })
+    ]);
 
-    if (!targetCountryId) {
-      return {
-        products: allProducts,
-        popular: allProducts.filter(p => p.is_popular).slice(0, 8)
-      };
-    }
-
-    const localProducts = allProducts.filter(p => p.country_id === targetCountryId);
-    const foreignProducts = allProducts.filter(p => p.country_id !== targetCountryId);
-
-    // Distribution 75% locaux / 25% étrangers (ratio 3 locaux pour 1 étranger)
     const mixedList: Product[] = [];
     let localIdx = 0;
     let foreignIdx = 0;
-    const totalToTake = params?.limit || Math.max(allProducts.length, 24);
-
-    while ((localIdx < localProducts.length || foreignIdx < foreignProducts.length) && mixedList.length < totalToTake) {
-      for (let i = 0; i < 3 && localIdx < localProducts.length; i++) {
-        mixedList.push(localProducts[localIdx++]);
-      }
-      if (foreignIdx < foreignProducts.length) {
-        mixedList.push(foreignProducts[foreignIdx++]);
-      } else if (localIdx >= localProducts.length) {
-        break;
-      }
-    }
-
-    while (localIdx < localProducts.length && mixedList.length < totalToTake) {
-      mixedList.push(localProducts[localIdx++]);
-    }
-    while (foreignIdx < foreignProducts.length && mixedList.length < totalToTake) {
-      mixedList.push(foreignProducts[foreignIdx++]);
-    }
-
-    // Répartition 75/25 pour les produits populaires
-    const localPopular = localProducts.filter(p => p.is_popular);
-    const foreignPopular = foreignProducts.filter(p => p.is_popular);
-    const mixedPopular: Product[] = [];
-    let pLocalIdx = 0;
-    let pForeignIdx = 0;
-
-    while ((pLocalIdx < localPopular.length || pForeignIdx < foreignPopular.length) && mixedPopular.length < 8) {
-      for (let i = 0; i < 3 && pLocalIdx < localPopular.length && mixedPopular.length < 8; i++) {
-        mixedPopular.push(localPopular[pLocalIdx++]);
-      }
-      if (pForeignIdx < foreignPopular.length && mixedPopular.length < 8) {
-        mixedPopular.push(foreignPopular[pForeignIdx++]);
-      } else if (pLocalIdx >= localPopular.length) {
-        break;
-      }
-    }
-    while (pLocalIdx < localPopular.length && mixedPopular.length < 8) {
-      mixedPopular.push(localPopular[pLocalIdx++]);
-    }
-    while (pForeignIdx < foreignPopular.length && mixedPopular.length < 8) {
-      mixedPopular.push(foreignPopular[pForeignIdx++]);
+    while (mixedList.length < totalToTake && (localIdx < localProducts.length || foreignIdx < foreignProducts.length)) {
+      for (let i = 0; i < 3 && localIdx < localProducts.length && mixedList.length < totalToTake; i++) mixedList.push(localProducts[localIdx++]);
+      if (foreignIdx < foreignProducts.length && mixedList.length < totalToTake) mixedList.push(foreignProducts[foreignIdx++]);
     }
 
     return {
-      products: mixedList.length > 0 ? mixedList : allProducts,
-      popular: mixedPopular.length > 0 ? mixedPopular : allProducts.filter(p => p.is_popular).slice(0, 8)
+      products: mixedList.length > 0 ? mixedList : localProducts,
+      popular: popularProducts
     };
   },
 

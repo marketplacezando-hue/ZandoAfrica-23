@@ -89,6 +89,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           src={mainPhoto}
           alt={product.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
         />
 
         {/* Badge d'origine (75% Local / 25% Étranger) */}
