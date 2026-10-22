@@ -4,5 +4,5 @@
 - [Utiliser R2 depuis Workers](https://developers.cloudflare.com/r2/api/workers/workers-api-usage/) : mise en place du bucket et du binding.
 - [API R2 des Workers](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/) : lecture/écriture d’objets et métadonnées HTTP.
 - [Métadonnées d’upload multipart des Workers](https://developers.cloudflare.com/workers/configuration/multipart-upload-metadata/) : le déploiement REST utilise une partie JSON `metadata` et un fichier module référencé par `main_module`.
-- [Limites R2](https://developers.cloudflare.com/r2/platform/limits/) : limites des API de gestion et des opérations d’objets; le Worker applique une taille maximale applicative de 10 MiB pour les images et 50 MiB pour les vidéos.
+- [Limites R2](https://developers.cloudflare.com/r2/platform/limits/) : limites des API de gestion et des opérations d’objets; le Worker applique une taille maximale applicative de 2 MiB pour chaque image et 50 MiB pour les vidéos.
 - [Rate Limiting API des Workers](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) : les compteurs locaux sont éventuellement cohérents et géographiques; le projet emploie donc KV pour un seuil applicatif simple, sans conserver l’adresse IP brute.

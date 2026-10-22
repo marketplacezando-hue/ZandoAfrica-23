@@ -16,7 +16,7 @@ function isAllowedOrigin(origin) {
     return false;
   }
 }
-const TYPES = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
+const TYPES = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'image/avif':'avif', 'video/mp4':'mp4', 'video/webm':'webm', 'video/quicktime':'mov' };
 function cors(origin, publicAsset = false) {
   const h = new Headers({ 'Access-Control-Allow-Methods':'GET, HEAD, POST, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, X-Media-Folder', 'Access-Control-Max-Age':'86400', 'Vary':'Origin' });
   if (publicAsset) h.set('Access-Control-Allow-Origin', '*'); else if (isAllowedOrigin(origin)) h.set('Access-Control-Allow-Origin', origin);
@@ -24,9 +24,20 @@ function cors(origin, publicAsset = false) {
 }
 function json(data, status, origin) { const h=cors(origin); h.set('Content-Type','application/json; charset=utf-8'); h.set('X-Content-Type-Options','nosniff'); return new Response(JSON.stringify(data),{status,headers:h}); }
 function valid(type,b) {
-  if(type==='image/jpeg') return b[0]===255&&b[1]===216&&b[2]===255;
-  if(type==='image/png') return [137,80,78,71,13,10,26,10].every((v,i)=>b[i]===v);
-  if(type==='image/webp') return String.fromCharCode(...b.slice(0,4))==='RIFF'&&String.fromCharCode(...b.slice(8,12))==='WEBP';
+  if(type==='image/jpeg') return b.length>=4&&b[0]===255&&b[1]===216&&b[2]===255&&b.slice(-16).some((v,i,a)=>v===255&&a[i+1]===217);
+  if(type==='image/png') {
+    if(b.length<45||![137,80,78,71,13,10,26,10].every((v,i)=>b[i]===v)||b[8]!==0||b[9]!==0||b[10]!==0||b[11]!==13||String.fromCharCode(...b.slice(12,16))!=='IHDR') return false;
+    const view=new DataView(b.buffer,b.byteOffset,b.byteLength);
+    return view.getUint32(16,false)>0&&view.getUint32(20,false)>0&&b.slice(-16).some((v,i,a)=>String.fromCharCode(...a.slice(i,i+4))==='IEND');
+  }
+  if(type==='image/gif') return b.length>=14&&['GIF87a','GIF89a'].includes(String.fromCharCode(...b.slice(0,6)))&&b[6]+b[7]+b[8]+b[9]>0&&b.slice(-16).includes(0x3b);
+  if(type==='image/webp') return b.length>=20&&String.fromCharCode(...b.slice(0,4))==='RIFF'&&String.fromCharCode(...b.slice(8,12))==='WEBP'&&new DataView(b.buffer,b.byteOffset,b.byteLength).getUint32(4,true)===b.length-8;
+  if(type==='image/avif') {
+    if(b.length<16||String.fromCharCode(...b.slice(4,8))!=='ftyp') return false;
+    if(['avif','avis'].includes(String.fromCharCode(...b.slice(8,12)))) return true;
+    for(let i=16;i+4<=Math.min(b.length,64);i+=4) { const brand=String.fromCharCode(...b.slice(i,i+4)); if(brand==='avif'||brand==='avis') return true; }
+    return false;
+  }
   if(type==='video/mp4'||type==='video/quicktime') return String.fromCharCode(...b.slice(4,8))==='ftyp';
   if(type==='video/webm') return b[0]===26&&b[1]===69&&b[2]===223&&b[3]===163;
   return false;
@@ -123,7 +134,7 @@ async function digitalDelete(req,env,url) {
   return digitalJson({ok:true},200);
 }
 async function media(req,env,key) {
-  if(!/^(products|videos|avatars|banners)\/[0-9a-f-]+\.(jpg|png|webp|mp4|webm|mov)$/.test(key)) return new Response('Not found',{status:404});
+  if(!/^(products|videos|avatars|banners)\/[0-9a-f-]+\.(jpg|png|webp|gif|avif|mp4|webm|mov)$/.test(key)) return new Response('Not found',{status:404});
   const head=await env.MEDIA_BUCKET.head(key); if(!head) return new Response('Not found',{status:404});
   const h=new Headers(); head.writeHttpMetadata(h); h.set('ETag',head.httpEtag); h.set('Cache-Control','public, max-age=31536000, immutable'); h.set('X-Content-Type-Options','nosniff'); h.set('Accept-Ranges','bytes'); h.set('Access-Control-Allow-Origin','*');
   let r=null; const rh=req.headers.get('Range');
@@ -157,13 +168,13 @@ export default { async fetch(req,env) {
     if(!isAllowedOrigin(origin)) return json({error:'Origin not allowed'},403,origin);
     const type=(req.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase(), ext=TYPES[type];
     if(!ext) return json({error:'Unsupported media type'},415,origin);
-    const limit=type.startsWith('image/')?10*1024*1024:50*1024*1024;
+    const limit=type.startsWith('image/')?2*1024*1024:50*1024*1024;
     if(Number(req.headers.get('Content-Length')||0)>limit) return json({error:'File too large'},413,origin);
     const folder=req.headers.get('X-Media-Folder')||(type.startsWith('image/')?'products':'videos');
     if(!['products','videos','avatars','banners'].includes(folder)) return json({error:'Invalid media folder'},400,origin);
     if(!await allowedUpload(req,env)) return json({error:'Upload limit reached'},429,origin);
     const body=await req.arrayBuffer(); if(!body.byteLength||body.byteLength>limit) return json({error:'Empty or oversized file'},413,origin);
-    if(!valid(type,new Uint8Array(body.slice(0,16)))) return json({error:'File signature mismatch'},415,origin);
+    if(!valid(type,new Uint8Array(body))) return json({error:'File signature mismatch'},415,origin);
     const key=folder+'/'+crypto.randomUUID()+'.'+ext;
     await env.MEDIA_BUCKET.put(key,body,{httpMetadata:{contentType:type,cacheControl:'public, max-age=31536000, immutable'},customMetadata:{folder}});
     return json({url:u.origin+'/media/'+key,key},201,origin);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
 import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { ShieldCheck, Globe, Zap, Users, MessageCircle, Phone } from 'lucide-react';
@@ -7,7 +7,14 @@ import { useZando } from '@/contexts/ZandoContext';
 
 export const AboutPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { settings } = useZando();
+
+  React.useEffect(() => {
+    if (location.hash !== '#contact') return;
+    const frame = window.requestAnimationFrame(() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash]);
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-10">
@@ -75,7 +82,7 @@ export const AboutPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="space-y-2 border-t pt-4">
+        <div id="contact" className="scroll-mt-24 space-y-2 border-t pt-4">
           <h2 className="text-lg font-bold text-foreground">Contact & Assistance</h2>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Pour toute demande d'assistance, partenariat ou signalement d'une annonce suspecte, notre équipe est à votre écoute :

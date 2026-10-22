@@ -13,6 +13,7 @@ import type {
   PlatformSettings,
   ProductReview
 } from '@/types/zando';
+import { getImageMime, MAX_IMAGE_UPLOAD_BYTES, validateImageFile } from '@/lib/imageValidation';
 
 const PRODUCT_LIST_SELECT = 'id,title,description,price,currency,category_id,country_id,city,seller_name,seller_phone,photos,duration_days,status,is_popular,views_count,calls_count,whatsapp_clicks_count,published_at,expires_at,created_at,updated_at,countries(*),categories(*)';
 
@@ -267,16 +268,18 @@ export const zandoApi = {
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('products')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating product:', error);
       return false;
     }
-    return true;
+    return Boolean(data?.id);
   },
 
   async softDeleteProduct(id: string): Promise<boolean> {
@@ -550,24 +553,29 @@ export const zandoApi = {
 
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
     const mimeByExtension: Record<string, string> = {
-      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif',
       mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime'
     };
     const aliases: Record<string, string> = {
       'image/jpg': 'image/jpeg', 'image/pjpeg': 'image/jpeg', 'image/x-png': 'image/png'
     };
     const rawType = file.type.toLowerCase();
-    const contentType = aliases[rawType] || mimeByExtension[extension] || rawType;
-    const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(contentType);
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'];
+    const isImage = rawType.startsWith('image/') || imageExtensions.includes(extension);
+    let contentType = aliases[rawType] || mimeByExtension[extension] || rawType;
+    if (isImage) {
+      const validationError = await validateImageFile(file);
+      if (validationError) return { url: null, error: validationError };
+      contentType = (await getImageMime(file)) || '';
+    }
     const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(contentType);
     if (!isImage && !isVideo) {
-      return { url: null, error: 'Format non pris en charge. Images acceptées : PNG, JPEG ou WebP.' };
+      return { url: null, error: 'Format non pris en charge. Images acceptées : JPG/JPEG, PNG, WebP, GIF ou AVIF.' };
     }
 
-    const sizeLimit = (isImage ? 10 : 50) * 1024 * 1024;
+    const sizeLimit = isImage ? MAX_IMAGE_UPLOAD_BYTES : 50 * 1024 * 1024;
     if (file.size > sizeLimit) {
-      const actualSize = (file.size / (1024 * 1024)).toFixed(1);
-      return { url: null, error: `Fichier de ${actualSize} Mio : la limite est de ${isImage ? '10' : '50'} Mio.` };
+      return { url: null, error: isImage ? 'La photo ne doit pas dépasser 2 Mo.' : 'La vidéo ne doit pas dépasser 50 Mo.' };
     }
 
     try {
@@ -584,11 +592,11 @@ export const zandoApi = {
         const messages: Record<string, string> = {
           'Origin not allowed': 'Ce domaine du site n’est pas autorisé. Ouvrez le domaine officiel ou l’aperçu stable.',
           'Unsupported media type': 'Le format réel du fichier n’est pas pris en charge.',
-          'File too large': 'Le fichier dépasse la limite autorisée.',
+          'File too large': isImage ? 'La photo ne doit pas dépasser 2 Mo.' : 'La vidéo ne doit pas dépasser 50 Mo.',
           'Empty or oversized file': 'Le fichier est vide ou dépasse la limite autorisée.',
           'Invalid media folder': 'La destination de stockage est invalide.',
           'Upload limit reached': 'La limite temporaire de téléversements est atteinte. Réessayez plus tard.',
-          'File signature mismatch': 'Le contenu du fichier ne correspond pas à son extension. Réexportez-le en PNG, JPEG ou WebP.'
+          'File signature mismatch': 'Le contenu du fichier ne correspond pas au type annoncé. Réexportez-le en JPG/JPEG, PNG, WebP, GIF ou AVIF.'
         };
         const detail = result.error ? messages[result.error] || result.error : 'Réponse invalide du stockage.';
         return { url: null, error: `${detail} (HTTP ${response.status})` };

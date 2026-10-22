@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import { supabase } from '@/db/supabase';
@@ -25,6 +25,7 @@ export const HomePage: React.FC = () => {
   const { selectedCountry, categories } = useZando();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
@@ -36,10 +37,29 @@ export const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
+  const routeSearchQuery = searchParams.get('q') || '';
+  const routeCategory = searchParams.get('category') || 'all';
 
   const popularScrollRef = useRef<HTMLDivElement>(null);
   const realtimeReloadTimerRef = useRef<number | null>(null);
   const [isPopularPaused, setIsPopularPaused] = useState(false);
+
+  useEffect(() => {
+    setSearchQuery(routeSearchQuery);
+    setAppliedSearchQuery(routeSearchQuery);
+  }, [routeSearchQuery]);
+
+  useEffect(() => {
+    setSelectedCategory(routeCategory);
+  }, [routeCategory]);
+
+  useEffect(() => {
+    if (location.hash !== '#dernieres-annonces') return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('dernieres-annonces')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash]);
 
   // Défilement continu horizontal pour les produits populaires
   useEffect(() => {
@@ -310,7 +330,7 @@ export const HomePage: React.FC = () => {
       )}
 
       {/* Section 2: Dernières annonces publiées (Ratio 75% local / 25% étranger) */}
-      <section id="dernieres-annonces" className="space-y-6">
+      <section id="dernieres-annonces" className="scroll-mt-28 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
