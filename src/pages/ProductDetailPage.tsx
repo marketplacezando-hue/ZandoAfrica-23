@@ -596,14 +596,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Desktop reading flow: gallery, full description, then customer reviews. */}
-          <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-6">
-            <h2 className="text-base font-black text-foreground sm:text-lg">Description du produit</h2>
-            <p className="mt-3 whitespace-pre-line break-words [overflow-wrap:anywhere] text-sm leading-7 text-foreground/90">
-              {product.description || 'Aucune description détaillée fournie.'}
-            </p>
-          </section>
-
+          {/* Customer reviews stay directly below the product gallery. */}
           <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-6" aria-labelledby="product-reviews-heading">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -791,6 +784,16 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Description kept in its original information-column position. */}
+            <div className="space-y-2 border-t pt-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Description du produit
+              </h3>
+              <p className="whitespace-pre-line break-words [overflow-wrap:anywhere] text-xs leading-relaxed text-foreground/90 sm:text-sm">
+                {product.description || 'Aucune description détaillée fournie.'}
+              </p>
+            </div>
 
             {/* 1. Seller Card with Seller Name (Requirement 3: Step 1) */}
             <div className="rounded-2xl border-2 border-border/80 p-4 bg-card flex items-center gap-3.5 shadow-xs">
