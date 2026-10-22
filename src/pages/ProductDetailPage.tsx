@@ -595,6 +595,50 @@ export const ProductDetailPage: React.FC = () => {
               ))}
             </div>
           )}
+
+          {/* Desktop reading flow: gallery, full description, then customer reviews. */}
+          <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-6">
+            <h2 className="text-base font-black text-foreground sm:text-lg">Description du produit</h2>
+            <p className="mt-3 whitespace-pre-line break-words [overflow-wrap:anywhere] text-sm leading-7 text-foreground/90">
+              {product.description || 'Aucune description détaillée fournie.'}
+            </p>
+          </section>
+
+          <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-6" aria-labelledby="product-reviews-heading">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h2 id="product-reviews-heading" className="text-base font-black text-foreground sm:text-lg">Commentaires et avis clients</h2>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-0.5 text-amber-500" aria-label={`${averageRating} sur 5 étoiles`}>
+                    {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`h-3.5 w-3.5 ${star <= Math.round(Number(averageRating)) ? 'fill-amber-500' : 'text-muted-foreground/30'}`} />)}
+                  </span>
+                  <span className="font-semibold">{averageRating} / 5 · {reviews.length} avis</span>
+                </div>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setReviewsModalOpen(true)} className="w-full max-w-full whitespace-normal break-words sm:w-auto">
+                <MessageSquare className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                Voir et donner un avis
+              </Button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {reviews.length === 0 ? (
+                <p className="rounded-xl bg-muted/40 px-4 py-5 text-center text-sm text-muted-foreground">Aucun avis pour l’instant. Soyez le premier à commenter.</p>
+              ) : (
+                reviews.slice(0, 5).map(review => (
+                  <article key={review.id} className="min-w-0 rounded-xl border border-border/70 bg-muted/30 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="max-w-full break-words text-sm font-bold text-foreground">{review.author_name}</span>
+                      <span className="flex shrink-0 items-center gap-0.5 text-amber-500" aria-label={`${review.rating} sur 5`}>
+                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`h-3 w-3 ${star <= review.rating ? 'fill-amber-500' : 'text-muted-foreground/30'}`} />)}
+                      </span>
+                    </div>
+                    <p className="mt-2 break-words [overflow-wrap:anywhere] text-sm leading-6 text-muted-foreground">{review.comment}</p>
+                  </article>
+                ))
+              )}
+            </div>
+            {reviews.length > 5 && <p className="mt-3 text-center text-xs text-muted-foreground">Les {reviews.length - 5} autres avis sont disponibles avec le bouton ci-dessus.</p>}
+          </section>
         </div>
 
         {/* Right Column: Information, Pricing, Seller & Actions matching Image 1 */}
@@ -747,16 +791,6 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
             )}
-
-            {/* Description */}
-            <div className="space-y-2 border-t pt-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Description du produit
-              </h3>
-              <p className="text-xs sm:text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
-                {product.description || 'Aucune description détaillée fournie.'}
-              </p>
-            </div>
 
             {/* 1. Seller Card with Seller Name (Requirement 3: Step 1) */}
             <div className="rounded-2xl border-2 border-border/80 p-4 bg-card flex items-center gap-3.5 shadow-xs">
