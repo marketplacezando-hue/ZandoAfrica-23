@@ -157,8 +157,8 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 bg-[#fbfdff] pb-16 sm:space-y-7">
-      <section className="-mx-4 bg-gradient-to-b from-[#edfffa] to-transparent px-4 pb-1 pt-3 sm:-mx-6 sm:px-6 sm:pt-4 lg:-mx-8 lg:px-8">
+    <div className="space-y-2 bg-[#fbfdff] pb-16 sm:space-y-3">
+      <section className="-mx-4 bg-gradient-to-b from-[#edfffa] to-transparent px-4 pb-0 pt-0 sm:-mx-6 sm:px-6 sm:pt-0 lg:-mx-8 lg:px-8">
         <form
           onSubmit={handleSearchSubmit}
           className="mx-auto flex max-w-5xl items-center gap-2 rounded-full border-[5px] border-emerald-50 bg-white p-1.5 shadow-[0_8px_24px_rgba(0,166,81,0.13)] ring-1 ring-emerald-100/80 sm:p-2"

@@ -6,4 +6,4 @@
 - [x] Les visuels de fond des deux bannières sont intégrés dans `public/home/` et ne dépendent pas d’un CDN externe.
 - [x] Les routes, les appels Supabase, les annonces, les publicités VIP, le temps réel et le menu mobile existants restent en place.
 - [x] TypeScript, Biome et build Vite ciblés validés; le script global conserve les limitations préexistantes `ast-grep`/`/workspace` du sandbox.
-- [ ] Commit et déploiement de la branche `main` vers le projet Vercel `zando-africa-23`.
+- [x] Commit et déploiement de la branche `main` vers le projet Vercel `zando-africa-23`.

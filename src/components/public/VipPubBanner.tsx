@@ -190,7 +190,7 @@ export const VipPubBanner: React.FC<VipPubBannerProps> = ({ banner }) => {
         {activeItem.isPresentation ? (
           <div
             key="presentation-slide"
-            className="relative flex min-h-[320px] items-center overflow-hidden px-8 py-8 sm:min-h-[360px] sm:px-12 md:min-h-[390px] md:px-14"
+            className="relative flex min-h-[320px] items-center overflow-hidden px-8 py-8 sm:min-h-[350px] sm:px-12 sm:py-6 md:min-h-[390px] md:px-14"
             style={{ backgroundImage: `url(${activeItem.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#073fae] via-[#084bbd]/95 via-58% to-transparent" />

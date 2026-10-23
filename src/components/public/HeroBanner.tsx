@@ -84,17 +84,17 @@ export const HeroBanner: React.FC = () => {
       {slide.kind === 'marketplace' && slide.imageUrl ? (
         <div
           key={slide.id}
-          className="relative min-h-[210px] bg-cover bg-center transition-all duration-500 sm:min-h-[252px] md:min-h-[290px]"
+          className="relative min-h-[210px] bg-cover bg-center transition-all duration-500 sm:min-h-[220px] md:min-h-[260px]"
           style={{ backgroundImage: `url(${slide.imageUrl})` }}
           role="img"
           aria-label={slide.altText}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-[#064d3b] via-[#075b43]/95 via-55% to-transparent" />
-          <div className="relative z-10 flex min-h-[210px] max-w-[58%] flex-col justify-center px-8 py-7 sm:min-h-[252px] sm:px-12 sm:py-9 md:min-h-[290px] md:max-w-[55%] md:px-14">
+          <div className="relative z-10 flex min-h-[210px] max-w-[62%] flex-col justify-center px-8 py-6 sm:min-h-[220px] sm:max-w-[60%] sm:px-10 sm:py-3 md:min-h-[260px] md:max-w-[55%] md:px-14">
             <span className="mb-2 inline-flex w-fit items-center rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black shadow-lg sm:text-xs">
               {slide.tag}
             </span>
-            <h2 className="max-w-[430px] text-[25px] font-black leading-[1.02] tracking-tight sm:text-4xl md:text-5xl">
+            <h2 className="max-w-[450px] text-[25px] font-black leading-[1.02] tracking-tight sm:text-3xl md:text-4xl">
               Votre marketplace <span className="block text-white">de <span className="text-orange-400">confiance</span></span>
             </h2>
             <p className="mt-3 max-w-[340px] text-xs leading-relaxed text-emerald-50 sm:text-sm md:text-base">
@@ -111,7 +111,7 @@ export const HeroBanner: React.FC = () => {
           </div>
         </div>
       ) : slide.kind === 'message' ? (
-        <div key={slide.id} className="relative flex min-h-[210px] items-center overflow-hidden px-10 py-8 sm:min-h-[252px] sm:px-14 md:min-h-[290px]">
+          <div key={slide.id} className="relative flex min-h-[210px] items-center overflow-hidden px-10 py-8 sm:min-h-[220px] sm:px-14 md:min-h-[260px]">
           <div className="absolute -right-10 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-emerald-300/10 blur-3xl" />
           <div className="relative z-10 max-w-2xl">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black uppercase tracking-wider sm:text-xs">
@@ -127,10 +127,10 @@ export const HeroBanner: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div key={slide.id} className="relative min-h-[210px] overflow-hidden sm:min-h-[252px] md:min-h-[290px]">
+          <div key={slide.id} className="relative min-h-[210px] overflow-hidden sm:min-h-[220px] md:min-h-[260px]">
           <img src={slide.imageUrl} alt={slide.altText || slide.title} className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#07533f]/95 via-[#07533f]/60 to-transparent" />
-          <div className="relative z-10 flex min-h-[210px] max-w-[60%] flex-col justify-center px-8 py-8 sm:min-h-[252px] sm:px-14 md:min-h-[290px]">
+          <div className="relative z-10 flex min-h-[210px] max-w-[60%] flex-col justify-center px-8 py-8 sm:min-h-[220px] sm:px-14 md:min-h-[260px]">
             <span className="text-xs font-black uppercase tracking-wider text-orange-300">Produit vedette</span>
             <h2 className="mt-2 text-2xl font-black sm:text-4xl">{slide.title}</h2>
             <p className="mt-3 text-sm text-emerald-50 sm:text-base">{slide.description}</p>

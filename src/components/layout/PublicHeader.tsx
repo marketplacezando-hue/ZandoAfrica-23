@@ -120,7 +120,7 @@ export const PublicHeader: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-emerald-100/70 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-2 px-4 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-2 px-4 sm:h-[72px] sm:gap-4 sm:px-6 lg:px-8">
           
           {/* Le logo revient à l'accueil; quatre clics successifs ouvrent la connexion admin. */}
           <Link
