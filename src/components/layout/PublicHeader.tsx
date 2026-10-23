@@ -132,7 +132,7 @@ export const PublicHeader: React.FC = () => {
             <img
               src={BRAND_ASSETS.logoUrl}
               alt={BRAND_ASSETS.brandName}
-              className="h-9 w-auto object-contain sm:h-11"
+              className="h-10 w-auto object-contain sm:h-12"
             />
           </Link>
 
