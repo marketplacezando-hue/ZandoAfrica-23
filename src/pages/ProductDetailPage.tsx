@@ -950,7 +950,7 @@ export const ProductDetailPage: React.FC = () => {
 
       {/* Reviews Modal (Requirement 4) */}
       <Dialog open={reviewsModalOpen} onOpenChange={setReviewsModalOpen}>
-        <DialogContent className="left-0 top-0 h-[100dvh] w-screen max-h-none max-w-none translate-x-0 translate-y-0 rounded-none p-4 pt-14 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-card border shadow-2xl overflow-y-auto sm:left-[50%] sm:top-[50%] sm:h-auto sm:w-[calc(100%-2rem)] sm:max-h-[90vh] sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:p-6">
+        <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-lg p-6 bg-card border shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="text-left space-y-1">
             <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-primary" />
