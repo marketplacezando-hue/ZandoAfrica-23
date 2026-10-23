@@ -102,7 +102,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               className={`group flex w-[82px] shrink-0 flex-col items-center gap-2 rounded-2xl px-1 py-1 text-center transition-transform active:scale-95 sm:w-[96px] ${isSelected ? 'scale-[1.04]' : ''}`}
             >
               <span className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-md transition-shadow group-hover:shadow-lg sm:h-[72px] sm:w-[72px] ${style.background} ${isSelected ? 'ring-4 ring-emerald-200 ring-offset-2' : ''}`}>
-                <Icon className="h-8 w-8" strokeWidth={2.2} aria-hidden="true" />
+                <Icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} aria-hidden="true" />
               </span>
               <span className={`whitespace-pre-line text-[11px] font-semibold leading-[1.15] sm:text-xs ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
                 {label}
