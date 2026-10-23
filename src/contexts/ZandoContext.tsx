@@ -64,10 +64,27 @@ const defaultSettings: PlatformSettings = {
   security_content: 'Vérifiez les articles en personne avant tout paiement. Ne transférez jamais d’argent à l’avance à un vendeur que vous ne connaissez pas et signalez toute annonce suspecte.'
 };
 
+const FALLBACK_COUNTRIES: Country[] = [
+  { id: 'CG', name: 'Congo-Brazzaville', flag_emoji: '🇨🇬', dial_code: '+242', currency: 'XAF', is_active: true, sort_order: 1 },
+  { id: 'CD', name: 'RDC', flag_emoji: '🇨🇩', dial_code: '+243', currency: 'CDF', is_active: true, sort_order: 2 },
+  { id: 'CI', name: 'Côte d’Ivoire', flag_emoji: '🇨🇮', dial_code: '+225', currency: 'XOF', is_active: true, sort_order: 3 },
+  { id: 'SN', name: 'Sénégal', flag_emoji: '🇸🇳', dial_code: '+221', currency: 'XOF', is_active: true, sort_order: 4 }
+];
+
+const FALLBACK_CATEGORIES: Category[] = [
+  { id: 'telephones-tablettes', name: 'Téléphones & Tablettes', icon: 'Smartphone', is_active: true, sort_order: 1 },
+  { id: 'informatique-ordinateurs', name: 'Informatique & Ordinateurs', icon: 'Laptop', is_active: true, sort_order: 2 },
+  { id: 'immobilier', name: 'Maison & Déco', icon: 'Home', is_active: true, sort_order: 3 },
+  { id: 'mode-chaussures', name: 'Mode & Chaussures', icon: 'Shirt', is_active: true, sort_order: 4 },
+  { id: 'vehicules', name: 'Véhicules & Auto', icon: 'Car', is_active: true, sort_order: 5 },
+  { id: 'electromenager', name: 'Meubles & Électroménager', icon: 'Tv', is_active: true, sort_order: 6 },
+  { id: 'services-autres', name: 'Autres Catégories', icon: 'Briefcase', is_active: true, sort_order: 7 }
+];
+
 export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [selectedCountry, setSelectedCountryState] = useState<Country | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>(FALLBACK_COUNTRIES);
+  const [selectedCountry, setSelectedCountryState] = useState<Country | null>(FALLBACK_COUNTRIES[0]);
+  const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
   const [selectedCurrencyState, setSelectedCurrencyState] = useState<DisplayCurrency>(() => normalizeCurrency(localStorage.getItem('zando_display_currency')) || 'FCFA');
   const [visitorCountry, setVisitorCountry] = useState<VisitorCountry | null>(null);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(() => readCachedExchangeRates());
@@ -123,19 +140,25 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const initData = async () => {
-      const [countriesData, categoriesData, settingsData] = await Promise.all([zandoApi.getCountries(), zandoApi.getCategories(), zandoApi.getPlatformSettings()]);
-      setCountries(countriesData); setCategories(categoriesData); setSettings(settingsData);
-      const defaultCountry = countriesData.find(c => c.id === 'CG') || countriesData[0] || null;
-      const savedCountryId = localStorage.getItem('zando_selected_country');
-      const foundCountry = countriesData.find(c => c.id === savedCountryId) || defaultCountry;
-      setSelectedCountryState(foundCountry);
-      if (!localStorage.getItem('zando_currency_manual')) {
-        // Use the selected country as the initial fallback. The IP lookup below
-        // then replaces it with any ISO currency returned for the visitor,
-        // including GBP, CAD, JPY and other currencies outside Africa.
-        const countryCurrency = foundCountry ? normalizeCurrency(foundCountry.currency) : null;
-        const configuredDefault = normalizeCurrency(settingsData.default_display_currency);
-        setSelectedCurrencyState(countryCurrency || configuredDefault || 'FCFA');
+      try {
+        const [countriesData, categoriesData, settingsData] = await Promise.all([zandoApi.getCountries(), zandoApi.getCategories(), zandoApi.getPlatformSettings()]);
+        const availableCountries = countriesData.length > 0 ? countriesData : FALLBACK_COUNTRIES;
+        const availableCategories = categoriesData.length > 0 ? categoriesData : FALLBACK_CATEGORIES;
+        setCountries(availableCountries); setCategories(availableCategories); setSettings(settingsData);
+        const defaultCountry = availableCountries.find(c => c.id === 'CG') || availableCountries[0] || null;
+        const savedCountryId = localStorage.getItem('zando_selected_country');
+        const foundCountry = availableCountries.find(c => c.id === savedCountryId) || defaultCountry;
+        setSelectedCountryState(foundCountry);
+        if (!localStorage.getItem('zando_currency_manual')) {
+          const countryCurrency = foundCountry ? normalizeCurrency(foundCountry.currency) : null;
+          const configuredDefault = normalizeCurrency(settingsData.default_display_currency);
+          setSelectedCurrencyState(countryCurrency || configuredDefault || 'FCFA');
+        }
+      } catch (error) {
+        console.warn('Backend indisponible, affichage des catégories et pays de secours.', error);
+        setCountries(FALLBACK_COUNTRIES);
+        setCategories(FALLBACK_CATEGORIES);
+        setSelectedCountryState(FALLBACK_COUNTRIES[0]);
       }
     };
     void initData();

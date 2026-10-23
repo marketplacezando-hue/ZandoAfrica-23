@@ -88,6 +88,15 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes payment-marquee {

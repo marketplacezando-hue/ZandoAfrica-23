@@ -76,7 +76,7 @@ export const VipPubBanner: React.FC<VipPubBannerProps> = ({ banner }) => {
     title: 'Votre site ici ! Boostez votre visibilité',
     description: "Touchez plus de 50 000 acheteurs potentiels par jour à travers 8 pays d’Afrique.",
     tagline: 'Emplacement VIP en tête d’accueil.',
-    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80',
+    imageUrl: '/home/vip-visibility.jpg',
     targetUrl: '/passer-pub'
   };
 
@@ -182,7 +182,7 @@ export const VipPubBanner: React.FC<VipPubBannerProps> = ({ banner }) => {
   return (
     <>
       {/* Grand cadre bleu consacré aux publicités VIP (Étape 5) */}
-      <div className="relative w-full rounded-3xl border-2 border-blue-500/40 bg-gradient-to-b from-[#193374] via-[#132658] to-[#0d1a40] text-white shadow-2xl p-5 sm:p-7 md:p-8 flex flex-col justify-between min-h-[320px] transition-all duration-500">
+      <div className="relative w-full overflow-hidden rounded-[22px] border-2 border-blue-500/40 bg-[#083ca3] text-white shadow-[0_14px_34px_rgba(17,72,185,0.25)] transition-all duration-500">
         {/* Glow décoratif */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -190,28 +190,38 @@ export const VipPubBanner: React.FC<VipPubBannerProps> = ({ banner }) => {
         {activeItem.isPresentation ? (
           <div
             key="presentation-slide"
-            className="flex-1 flex flex-col items-center justify-center text-center py-6 px-2 sm:px-6 space-y-4 animate-in fade-in duration-500 z-10"
+            className="relative flex min-h-[320px] items-center overflow-hidden px-8 py-8 sm:min-h-[360px] sm:px-12 md:min-h-[390px] md:px-14"
+            style={{ backgroundImage: `url(${activeItem.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            {/* Badge PUB VIP */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs sm:text-sm font-black uppercase tracking-wider shadow-md">
-              <Sparkles className="w-4 h-4 fill-white" />
-              <span>PUB VIP</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#073fae] via-[#084bbd]/95 via-58% to-transparent" />
+            <div className="relative z-10 max-w-[58%] space-y-3 text-left sm:max-w-[55%] sm:space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#1f74ff] px-3.5 py-1.5 text-xs font-black uppercase tracking-wider shadow-md sm:text-sm">
+                <Sparkles className="h-4 w-4 fill-white" aria-hidden="true" />
+                <span>PUB VIP</span>
+              </div>
+
+              <h3 className="text-[25px] font-black leading-[1.04] tracking-tight sm:text-4xl md:text-5xl">
+                {activeItem.title}
+              </h3>
+
+              <p className="max-w-[430px] text-xs leading-relaxed text-blue-50 sm:text-sm md:text-base">
+                {activeItem.description}
+              </p>
+
+              <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-200 sm:text-xs">
+                {activeItem.tagline}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => handleOpenAdDetail(activeItem)}
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#0877ff] px-4 py-2.5 text-xs font-black shadow-lg transition-transform hover:bg-[#1687ff] active:scale-95 sm:px-6 sm:py-3 sm:text-sm"
+              >
+                <Megaphone className="h-4 w-4" aria-hidden="true" />
+                <span>Découvrir cette PUB VIP</span>
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
-
-            {/* Titre : Votre site ici ! Boostez votre visibilité */}
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight break-words max-w-2xl">
-              {activeItem.title}
-            </h3>
-
-            {/* Texte 1 : Touchez plus de 50 000 acheteurs potentiels par jour à travers 8 pays d’Afrique. */}
-            <p className="text-sm sm:text-base md:text-lg text-blue-100/90 leading-relaxed max-w-xl font-normal break-words">
-              {activeItem.description}
-            </p>
-
-            {/* Texte 2 : Emplacement VIP en tête d’accueil. */}
-            <p className="text-xs sm:text-sm font-semibold text-blue-300 tracking-wide uppercase">
-              {activeItem.tagline}
-            </p>
           </div>
         ) : (
           /* Phase 5.2 : Défilement des publicités enregistrées et actives */
@@ -263,7 +273,7 @@ export const VipPubBanner: React.FC<VipPubBannerProps> = ({ banner }) => {
         )}
 
         {/* Bouton permanent « Découvrir cette PUB VIP » (Étape 5) */}
-        <div className="pt-4 z-10">
+        <div className={activeItem.isPresentation ? 'hidden pt-4 z-10' : 'pt-4 z-10'}>
           <button
             type="button"
             onClick={() => handleOpenAdDetail(activeItem)}

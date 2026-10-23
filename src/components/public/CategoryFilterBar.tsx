@@ -1,15 +1,16 @@
 import React from 'react';
 import type { Category } from '@/types/zando';
 import {
-  LayoutGrid,
-  Smartphone,
-  Laptop,
-  Shirt,
-  Tv,
-  Gamepad2,
+  Briefcase,
   Car,
+  Gamepad2,
   Home,
-  Briefcase
+  Laptop,
+  LayoutGrid,
+  Shirt,
+  Smartphone,
+  Tv,
+  type LucideIcon
 } from 'lucide-react';
 
 interface CategoryFilterBarProps {
@@ -18,67 +19,94 @@ interface CategoryFilterBarProps {
   onSelectCategory: (categoryId: string) => void;
 }
 
+const CATEGORY_STYLES = [
+  { background: 'bg-orange-500', soft: 'bg-orange-50', icon: Smartphone },
+  { background: 'bg-emerald-500', soft: 'bg-emerald-50', icon: Laptop },
+  { background: 'bg-blue-600', soft: 'bg-blue-50', icon: Home },
+  { background: 'bg-purple-600', soft: 'bg-purple-50', icon: Shirt },
+  { background: 'bg-pink-600', soft: 'bg-pink-50', icon: Car },
+  { background: 'bg-amber-500', soft: 'bg-amber-50', icon: Tv },
+  { background: 'bg-teal-600', soft: 'bg-teal-50', icon: LayoutGrid },
+  { background: 'bg-indigo-600', soft: 'bg-indigo-50', icon: Briefcase }
+];
+
+const getIcon = (iconName: string): LucideIcon => {
+  switch (iconName.toLowerCase()) {
+    case 'smartphone': return Smartphone;
+    case 'laptop': return Laptop;
+    case 'shirt': return Shirt;
+    case 'tv': return Tv;
+    case 'gamepad2': return Gamepad2;
+    case 'car': return Car;
+    case 'home': return Home;
+    case 'briefcase': return Briefcase;
+    default: return LayoutGrid;
+  }
+};
+
+const shortLabel = (name: string) => {
+  const replacements: Record<string, string> = {
+    'Téléphones & Tablettes': 'Téléphones\n& Tablettes',
+    'Informatique & Ordinateurs': 'Informatique\n& Accessoires',
+    'Mode & Chaussures': 'Mode\n& Beauté',
+    'Véhicules & Auto': 'Véhicules\n& Motos',
+    'Électroménager': 'Meubles\n& Électroménager',
+    'Services & Autres': 'Autres\nCatégories'
+  };
+  return replacements[name] || name;
+};
+
 export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   categories,
   selectedCategoryId,
   onSelectCategory
 }) => {
-  const getIcon = (iconName: string) => {
-    switch (iconName.toLowerCase()) {
-      case 'smartphone':
-        return <Smartphone className="w-4 h-4" />;
-      case 'laptop':
-        return <Laptop className="w-4 h-4" />;
-      case 'shirt':
-        return <Shirt className="w-4 h-4" />;
-      case 'tv':
-        return <Tv className="w-4 h-4" />;
-      case 'gamepad2':
-        return <Gamepad2 className="w-4 h-4" />;
-      case 'car':
-        return <Car className="w-4 h-4" />;
-      case 'home':
-        return <Home className="w-4 h-4" />;
-      case 'briefcase':
-        return <Briefcase className="w-4 h-4" />;
-      default:
-        return <LayoutGrid className="w-4 h-4" />;
-    }
-  };
-
   return (
-    <div className="w-full overflow-x-auto no-scrollbar py-2">
-      <div className="flex items-center gap-2 min-w-max pb-1">
-        {/* "Toutes les catégories" pill */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
+            <LayoutGrid className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <h2 className="truncate text-xl font-black tracking-tight text-[#07533f] sm:text-2xl">
+            Toutes les catégories
+          </h2>
+        </div>
         <button
           type="button"
           onClick={() => onSelectCategory('all')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`inline-flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-bold transition-colors sm:px-5 sm:text-sm ${
             selectedCategoryId === 'all'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-card border border-border text-foreground hover:bg-muted/80'
+              ? 'border-emerald-600 bg-emerald-600 text-white'
+              : 'border-emerald-600 bg-white text-emerald-700 hover:bg-emerald-50'
           }`}
         >
-          <LayoutGrid className="w-4 h-4" />
-          <span>Toutes les catégories</span>
+          Voir tout
+          <span aria-hidden="true">›</span>
         </button>
+      </div>
 
-        {/* Dynamic Categories */}
-        {categories.map(cat => {
-          const isSelected = selectedCategoryId === cat.id;
+      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar sm:justify-between sm:gap-4">
+        {categories.map((category, index) => {
+          const style = CATEGORY_STYLES[index % CATEGORY_STYLES.length];
+          const Icon = getIcon(category.icon);
+          const isSelected = selectedCategoryId === category.id;
+          const label = shortLabel(category.name);
+
           return (
             <button
               type="button"
-              key={cat.id}
-              onClick={() => onSelectCategory(cat.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-primary text-primary-foreground shadow-sm font-semibold'
-                  : 'bg-card border border-border text-foreground hover:bg-muted/80'
-              }`}
+              key={category.id}
+              onClick={() => onSelectCategory(category.id)}
+              aria-pressed={isSelected}
+              className={`group flex w-[82px] shrink-0 flex-col items-center gap-2 rounded-2xl px-1 py-1 text-center transition-transform active:scale-95 sm:w-[96px] ${isSelected ? 'scale-[1.04]' : ''}`}
             >
-              {getIcon(cat.icon)}
-              <span>{cat.name}</span>
+              <span className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-md transition-shadow group-hover:shadow-lg sm:h-[72px] sm:w-[72px] ${style.background} ${isSelected ? 'ring-4 ring-emerald-200 ring-offset-2' : ''}`}>
+                <Icon className="h-8 w-8" strokeWidth={2.2} aria-hidden="true" />
+              </span>
+              <span className={`whitespace-pre-line text-[11px] font-semibold leading-[1.15] sm:text-xs ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
+                {label}
+              </span>
             </button>
           );
         })}

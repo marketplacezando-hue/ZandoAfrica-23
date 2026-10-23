@@ -119,20 +119,20 @@ export const PublicHeader: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-card/95 backdrop-blur shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4">
+      <header className="sticky top-0 z-40 w-full border-b border-emerald-100/70 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-2 px-4 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
           
           {/* Le logo revient à l'accueil; quatre clics successifs ouvrent la connexion admin. */}
           <Link
             to="/"
             onClick={handleLogoClick}
-            className="flex items-center shrink-0 cursor-pointer select-none transition-transform active:scale-95 group relative"
+              className="group relative flex shrink-0 cursor-pointer select-none items-center transition-transform active:scale-95"
             title="Zando Africa — Retour à l'accueil"
           >
             <img
               src={BRAND_ASSETS.logoUrl}
               alt={BRAND_ASSETS.brandName}
-              className="h-10 sm:h-12 w-auto object-contain"
+              className="h-9 w-auto object-contain sm:h-11"
             />
           </Link>
 
@@ -143,7 +143,7 @@ export const PublicHeader: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer text-foreground"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-emerald-50 sm:px-2.5 sm:text-sm"
                 >
                   {!manualCountrySelection && visitorCountry ? <span className="text-base leading-none" aria-label={`Drapeau de ${visitorCountry.name}`}>{countryCodeToFlag(visitorCountry.code)}</span> : displayCountryCode ? <CountryFlag countryId={displayCountryCode} className="h-[18px] w-[27px]" /> : <span aria-hidden="true">🌍</span>}
                   <span className="hidden sm:inline max-w-[120px] truncate text-foreground">{displayCountryName}</span>
@@ -186,7 +186,7 @@ export const PublicHeader: React.FC = () => {
             {/* Bouton "Publier mon annonce" (SANS bouton "+", Requirement 1) */}
             <Link
               to="/publier"
-              className="inline-flex items-center justify-center px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl border-2 border-orange-600 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-extrabold shadow-sm transition-all hover:shadow-md active:scale-95 shrink-0"
+              className="inline-flex shrink-0 items-center justify-center rounded-full border-2 border-orange-500 bg-orange-500 px-4 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-orange-600 hover:shadow-md active:scale-95 sm:px-6 sm:py-2.5 sm:text-sm"
             >
               <span>Publier</span>
               <span className="hidden md:inline">&nbsp;mon annonce</span>
@@ -198,7 +198,7 @@ export const PublicHeader: React.FC = () => {
                 <button
                   type="button"
                   aria-label="Ouvrir le menu"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-emerald-700 bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-extrabold cursor-pointer transition-all shadow-xs active:scale-95"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-emerald-700 bg-white px-3 py-2 text-xs font-extrabold text-emerald-800 shadow-sm transition-all hover:bg-emerald-50 active:scale-95 sm:px-4 sm:text-sm"
                 >
                   <Menu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span className="hidden sm:inline">Menu</span>

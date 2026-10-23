@@ -1,23 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, ChevronLeft, ChevronRight, Flame, RotateCw, Search, Sparkles, X } from 'lucide-react';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import { supabase } from '@/db/supabase';
-import type { Product, BannerAd } from '@/types/zando';
+import type { BannerAd, Product } from '@/types/zando';
 import { HeroBanner } from '@/components/public/HeroBanner';
 import { VipPubBanner } from '@/components/public/VipPubBanner';
 import { CategoryFilterBar } from '@/components/public/CategoryFilterBar';
 import { ProductCard } from '@/components/public/ProductCard';
-import {
-  Search,
-  RotateCw,
-  ChevronLeft,
-  ChevronRight,
-  ArrowRight,
-  Flame,
-  Sparkles,
-  X
-} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -32,14 +23,11 @@ export const HomePage: React.FC = () => {
   const [bannerAd, setBannerAd] = useState<BannerAd | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Filters
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const routeSearchQuery = searchParams.get('q') || '';
   const routeCategory = searchParams.get('category') || 'all';
-
   const popularScrollRef = useRef<HTMLDivElement>(null);
   const realtimeReloadTimerRef = useRef<number | null>(null);
   const [isPopularPaused, setIsPopularPaused] = useState(false);
@@ -61,30 +49,21 @@ export const HomePage: React.FC = () => {
     return () => window.cancelAnimationFrame(frame);
   }, [location.hash]);
 
-  // Défilement continu horizontal pour les produits populaires
   useEffect(() => {
     const container = popularScrollRef.current;
     if (!container || popularProducts.length === 0) return;
-
-    let animId: number;
-    const speed = 0.85;
-
+    let animationId: number;
     const tick = () => {
-      if (!isPopularPaused && container) {
-        if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 2) {
-          container.scrollLeft = 0;
-        } else {
-          container.scrollLeft += speed;
-        }
+      if (!isPopularPaused) {
+        if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 2) container.scrollLeft = 0;
+        else container.scrollLeft += 0.85;
       }
-      animId = requestAnimationFrame(tick);
+      animationId = window.requestAnimationFrame(tick);
     };
-
-    animId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animId);
+    animationId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(animationId);
   }, [isPopularPaused, popularProducts]);
 
-  // Chargement avec ratio 75% local et 25% étranger (Exigence Utilisateur)
   const loadData = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
@@ -96,14 +75,11 @@ export const HomePage: React.FC = () => {
         }),
         zandoApi.getBannerAds('active')
       ]);
-
       setProducts(mixedResult.products);
       setPopularProducts(mixedResult.popular);
-      if (bannerAds.length > 0) {
-        setBannerAd(bannerAds[0]);
-      }
-    } catch (err) {
-      console.error('Error loading homepage data:', err);
+      if (bannerAds.length > 0) setBannerAd(bannerAds[0]);
+    } catch (error) {
+      console.error('Error loading homepage data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -111,7 +87,7 @@ export const HomePage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
     zandoApi.trackEvent({
       event_type: 'page_view',
       page_path: '/',
@@ -120,32 +96,21 @@ export const HomePage: React.FC = () => {
     });
   }, [selectedCountry?.id, selectedCategory, appliedSearchQuery]);
 
-  // Synchronisation en temps réel via Supabase Realtime (Exigence Utilisateur)
   useEffect(() => {
     const channel = supabase
       .channel('home-realtime-feed')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'products' },
-        () => {
-          // Regrouper les rafales d’événements (publication, vues, mise à jour)
-          // en une seule requête silencieuse.
-          if (realtimeReloadTimerRef.current !== null) window.clearTimeout(realtimeReloadTimerRef.current);
-          realtimeReloadTimerRef.current = window.setTimeout(() => {
-            realtimeReloadTimerRef.current = null;
-            void loadData(true);
-          }, 600);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'banner_ads' },
-        () => {
-          zandoApi.getBannerAds('active').then(ads => {
-            if (ads.length > 0) setBannerAd(ads[0]);
-          });
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        if (realtimeReloadTimerRef.current !== null) window.clearTimeout(realtimeReloadTimerRef.current);
+        realtimeReloadTimerRef.current = window.setTimeout(() => {
+          realtimeReloadTimerRef.current = null;
+          void loadData(true);
+        }, 600);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'banner_ads' }, () => {
+        void zandoApi.getBannerAds('active').then(ads => {
+          if (ads.length > 0) setBannerAd(ads[0]);
+        });
+      })
       .subscribe();
 
     return () => {
@@ -156,257 +121,132 @@ export const HomePage: React.FC = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadData();
+    void loadData();
   };
 
-  const handleCategorySelect = (catId: string) => {
-    setSelectedCategory(catId);
-    if (catId === 'all') {
-      searchParams.delete('category');
-    } else {
-      searchParams.set('category', catId);
-    }
-    setSearchParams(searchParams);
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    const nextParams = new URLSearchParams(searchParams);
+    if (categoryId === 'all') nextParams.delete('category');
+    else nextParams.set('category', categoryId);
+    setSearchParams(nextParams);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     const normalizedSearch = searchQuery.trim();
-    const nextSearchParams = new URLSearchParams(searchParams);
-    if (normalizedSearch) {
-      nextSearchParams.set('q', normalizedSearch);
-    } else {
-      nextSearchParams.delete('q');
-    }
-    setSearchParams(nextSearchParams);
+    const nextParams = new URLSearchParams(searchParams);
+    if (normalizedSearch) nextParams.set('q', normalizedSearch);
+    else nextParams.delete('q');
+    setSearchParams(nextParams);
     setSearchQuery(normalizedSearch);
-
-    if (normalizedSearch === appliedSearchQuery) {
-      void loadData();
-    } else {
-      setAppliedSearchQuery(normalizedSearch);
-    }
+    if (normalizedSearch === appliedSearchQuery) void loadData();
+    else setAppliedSearchQuery(normalizedSearch);
   };
 
   const handleSearchClear = () => {
-    const nextSearchParams = new URLSearchParams(searchParams);
-    nextSearchParams.delete('q');
-    setSearchParams(nextSearchParams);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('q');
+    setSearchParams(nextParams);
     setSearchQuery('');
     setAppliedSearchQuery('');
   };
 
   const scrollPopular = (direction: 'left' | 'right') => {
-    if (popularScrollRef.current) {
-      const offset = direction === 'left' ? -320 : 320;
-      popularScrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-    }
+    popularScrollRef.current?.scrollBy({ left: direction === 'left' ? -320 : 320, behavior: 'smooth' });
   };
 
   return (
-    <div className="space-y-8 sm:space-y-12 pb-16">
-      {/* Search Header Bar */}
-      <section className="bg-gradient-to-b from-primary/5 to-transparent px-3 pb-4 pt-6 sm:pb-6 sm:pt-8">
+    <div className="space-y-5 bg-[#fbfdff] pb-16 sm:space-y-7">
+      <section className="-mx-4 bg-gradient-to-b from-[#edfffa] to-transparent px-4 pb-1 pt-3 sm:-mx-6 sm:px-6 sm:pt-4 lg:-mx-8 lg:px-8">
         <form
           onSubmit={handleSearchSubmit}
-          className="mx-auto flex max-w-4xl items-center gap-1.5 rounded-full border-4 border-emerald-50 bg-white p-1.5 shadow-[0_10px_30px_rgba(0,166,81,0.16)] ring-1 ring-emerald-100/80 sm:gap-2 sm:p-2"
+          className="mx-auto flex max-w-5xl items-center gap-2 rounded-full border-[5px] border-emerald-50 bg-white p-1.5 shadow-[0_8px_24px_rgba(0,166,81,0.13)] ring-1 ring-emerald-100/80 sm:p-2"
         >
-          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm sm:h-14 sm:w-14">
+          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#079447] text-white shadow-sm sm:h-12 sm:w-12">
             <Search className="h-5 w-5 sm:h-6 sm:w-6" />
           </span>
-          <div className="relative flex-1 min-w-0">
+          <div className="relative min-w-0 flex-1">
             <Input
               type="text"
               aria-label="Que recherchez-vous ?"
-              placeholder="Que recherchez-vous ? (ex. : téléphone, voiture, maison…)"
+              placeholder="Que recherchez-vous ? (ex : téléphone, voiture, maison...)"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-11 w-full rounded-full border-0 bg-slate-100/90 pl-4 pr-9 text-xs text-foreground shadow-none placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-14 sm:text-base"
+              onChange={event => setSearchQuery(event.target.value)}
+              className="h-11 w-full rounded-full border-0 bg-[#f2f4f8] px-4 pr-9 text-xs text-foreground shadow-none placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:text-sm"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={handleSearchClear}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="w-4 h-4" />
+              <button type="button" onClick={handleSearchClear} aria-label="Effacer la recherche" className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-800">
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
-          <Button
-            type="submit"
-            aria-label="Rechercher"
-            className="h-11 shrink-0 gap-1.5 rounded-full bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 sm:h-14 sm:gap-2 sm:px-8 sm:text-base"
-          >
-            <span className="hidden sm:inline">Rechercher</span>
-            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Button type="submit" aria-label="Rechercher" className="h-11 w-11 shrink-0 rounded-full bg-[#079447] p-0 text-white shadow-sm hover:bg-[#087c3c] sm:h-12 sm:w-12">
+            <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </form>
       </section>
 
-      {/* Hero Banner Showcase (Image Vedette dans Cadre Rouge & Cadre Vert, Étape 4) */}
-      <section>
-        <HeroBanner />
+      <HeroBanner />
+      <VipPubBanner banner={bannerAd} />
+
+      <section className="rounded-2xl bg-white px-1 py-1 sm:px-2">
+        <CategoryFilterBar categories={categories} selectedCategoryId={selectedCategory} onSelectCategory={handleCategorySelect} />
       </section>
 
-      {/* VIP Advertising Banner (Cadre Bleu "PUB VIP", Étape 5) */}
-      <section>
-        <VipPubBanner banner={bannerAd} />
-      </section>
-
-      {/* Category Pills Filter Bar */}
-      <section className="sticky top-20 z-30 bg-background/95 backdrop-blur-xs py-2 border-y border-border/60">
-        <CategoryFilterBar
-          categories={categories}
-          selectedCategoryId={selectedCategory}
-          onSelectCategory={handleCategorySelect}
-        />
-      </section>
-
-      {/* Section 1: Produits populaires avec ratio 75% local et 25% étranger */}
       {popularProducts.length > 0 && (
-        <section className="space-y-4">
+        <section className="space-y-4 rounded-2xl bg-white p-4 sm:p-5">
           <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
+            <div>
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
-                  <Flame className="w-4 h-4" />
-                </span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
-                  Produits populaires
-                </h2>
+                <span className="rounded-lg bg-orange-100 p-1.5 text-orange-600"><Flame className="h-4 w-4" /></span>
+                <h2 className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">Produits populaires</h2>
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span>Défilement continu</span>
-                <span>•</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">75% Local ({selectedCountry?.name || 'Congo'})</span>
-                <span>•</span>
-                <span className="font-semibold text-blue-600 dark:text-blue-400">25% Étranger</span>
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">75% {selectedCountry?.name || 'local'} · 25% étranger</p>
             </div>
-
-            {/* Slider navigation arrows */}
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => scrollPopular('left')}
-                className="p-2 rounded-full border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shadow-xs"
-                aria-label="Précédent"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollPopular('right')}
-                className="p-2 rounded-full border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shadow-xs"
-                aria-label="Suivant"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <button type="button" onClick={() => scrollPopular('left')} aria-label="Produits populaires précédents" className="rounded-full border border-border bg-white p-2 text-muted-foreground shadow-sm hover:bg-muted"><ChevronLeft className="h-4 w-4" /></button>
+              <button type="button" onClick={() => scrollPopular('right')} aria-label="Produits populaires suivants" className="rounded-full border border-border bg-white p-2 text-muted-foreground shadow-sm hover:bg-muted"><ChevronRight className="h-4 w-4" /></button>
             </div>
           </div>
-
-          {/* Carrousel horizontal scrollable */}
-          <div
-            ref={popularScrollRef}
-            onMouseEnter={() => setIsPopularPaused(true)}
-            onMouseLeave={() => setIsPopularPaused(false)}
-            onTouchStart={() => setIsPopularPaused(true)}
-            onTouchEnd={() => setIsPopularPaused(false)}
-            className="flex items-stretch gap-4 overflow-x-auto no-scrollbar pb-3 pt-1 scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {popularProducts.map(p => (
-              <div key={p.id} className="w-[260px] sm:w-[280px] shrink-0">
-                <ProductCard
-                  product={p}
-                  variant="popular"
-                  onProductClick={() => navigate(`/produit/${p.id}`)}
-                />
-              </div>
+          <div ref={popularScrollRef} onMouseEnter={() => setIsPopularPaused(true)} onMouseLeave={() => setIsPopularPaused(false)} onTouchStart={() => setIsPopularPaused(true)} onTouchEnd={() => setIsPopularPaused(false)} className="flex items-stretch gap-4 overflow-x-auto pb-2 pt-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {popularProducts.map(product => (
+              <div key={product.id} className="w-[260px] shrink-0 sm:w-[280px]"><ProductCard product={product} variant="popular" onProductClick={() => navigate(`/produit/${product.id}`)} /></div>
             ))}
           </div>
         </section>
       )}
 
-      {/* Section 2: Dernières annonces publiées (Ratio 75% local / 25% étranger) */}
-      <section id="dernieres-annonces" className="scroll-mt-28 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
+      <section id="dernieres-annonces" className="scroll-mt-28 space-y-5 rounded-2xl bg-white p-4 sm:p-5">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
-                Dernières annonces publiées
-              </h2>
+              <span className="rounded-lg bg-emerald-100 p-1.5 text-emerald-600"><Sparkles className="h-4 w-4" /></span>
+              <h2 className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">Dernières annonces publiées</h2>
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <span>Sélection intelligente :</span>
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">75% {selectedCountry?.name || 'Local'}</span>
-              <span>&</span>
-              <span className="font-semibold text-blue-700 dark:text-blue-400">25% Étranger</span>
-              <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full ml-1">Mise à jour en direct</span>
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Sélection intelligente · mise à jour en direct</p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="self-start sm:self-auto rounded-full gap-2 text-xs font-semibold cursor-pointer"
-          >
-            <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Actualiser</span>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="self-start rounded-full gap-2 text-xs font-semibold sm:self-auto">
+            <RotateCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualiser
           </Button>
         </div>
 
-        {/* Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-pulse">
-                <div className="aspect-4/3 bg-muted rounded-xl" />
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-4 bg-muted rounded w-1/2" />
-                <div className="h-8 bg-muted rounded-xl" />
-              </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(item => (
+              <div key={item} className="space-y-3 rounded-2xl border border-border bg-card p-4 animate-pulse"><div className="aspect-[4/3] rounded-xl bg-muted" /><div className="h-4 w-3/4 rounded bg-muted" /><div className="h-4 w-1/2 rounded bg-muted" /><div className="h-8 rounded-xl bg-muted" /></div>
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map(p => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                variant="latest"
-                onProductClick={() => navigate(`/produit/${p.id}`)}
-              />
-            ))}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map(product => <ProductCard key={product.id} product={product} variant="latest" onProductClick={() => navigate(`/produit/${product.id}`)} />)}
           </div>
         ) : (
-          <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border p-8 space-y-4">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
-              <Search className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">Aucune annonce trouvée</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                Aucune annonce ne correspond à votre filtre actuel dans {selectedCountry?.name}. Soyez le premier à publier !
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                setSelectedCategory('all');
-                setSearchQuery('');
-              }}
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-            >
-              Réinitialiser les filtres
-            </Button>
+          <div className="space-y-4 rounded-2xl border border-dashed border-border bg-muted/30 p-10 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><Search className="h-6 w-6" /></div>
+            <div><h3 className="font-bold text-foreground">Aucune annonce trouvée</h3><p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">Aucune annonce ne correspond à votre filtre actuel dans {selectedCountry?.name || 'votre pays'}.</p></div>
+            <Button onClick={() => { setSelectedCategory('all'); setSearchQuery(''); handleCategorySelect('all'); }} variant="outline" size="sm" className="rounded-full">Réinitialiser les filtres</Button>
           </div>
         )}
       </section>
