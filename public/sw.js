@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zando-africa-pwa-v1';
+const CACHE_NAME = 'zando-africa-pwa-v2-cart-icon';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
