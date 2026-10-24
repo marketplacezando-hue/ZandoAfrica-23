@@ -22,6 +22,25 @@ function ascii(bytes: Uint8Array, start: number, end: number): string {
   return String.fromCharCode(...bytes.slice(start, end));
 }
 
+async function readImageHeader(file: File): Promise<Uint8Array> {
+  try {
+    return new Uint8Array(await file.slice(0, 32).arrayBuffer());
+  } catch {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          resolve(new Uint8Array(reader.result));
+        } else {
+          reject(new Error('Le navigateur n’a pas renvoyé les octets du fichier.'));
+        }
+      };
+      reader.onerror = () => reject(reader.error || new Error('Lecture du fichier impossible.'));
+      reader.readAsArrayBuffer(file.slice(0, 32));
+    });
+  }
+}
+
 export function detectImageMimeFromBytes(bytes: Uint8Array): SupportedImageMime | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return 'image/jpeg';
@@ -54,7 +73,7 @@ export function detectImageMimeFromBytes(bytes: Uint8Array): SupportedImageMime 
 }
 
 export async function getImageMime(file: File): Promise<SupportedImageMime | null> {
-  const header = new Uint8Array(await file.slice(0, 32).arrayBuffer());
+  const header = await readImageHeader(file);
   return detectImageMimeFromBytes(header);
 }
 
