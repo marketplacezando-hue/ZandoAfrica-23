@@ -598,26 +598,6 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Buyer payment tools and digital-product actions stay directly below the product photo. */}
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-              <span className="text-muted-foreground">⇄ Devise affichée :</span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {currencyOptions.map(cur => (
-                  <button
-                    key={cur}
-                    type="button"
-                    onClick={() => setSelectedCurrency(cur)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                      selectedCurrency === cur
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    {cur}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {product.category_id === 'digital-products' && (
               <div className="space-y-3">
                 <PaymentLogosMarquee />
@@ -719,6 +699,27 @@ export const ProductDetailPage: React.FC = () => {
             <div className="space-y-3">
               <div className="text-3xl sm:text-4xl font-black text-red-600 tracking-tight">
                 {formattedPrice}
+              </div>
+
+              {/* Keep the displayed-currency selector in its original pricing position. */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                <span className="text-muted-foreground">⇄ Devise affichée :</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {currencyOptions.map(cur => (
+                    <button
+                      key={cur}
+                      type="button"
+                      onClick={() => setSelectedCurrency(cur)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                        selectedCurrency === cur
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      {cur}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Invoiced Currency warning matching Image 1 */}
