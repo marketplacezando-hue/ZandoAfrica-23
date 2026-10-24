@@ -18,10 +18,12 @@ function upsertCanonical(url: string): void {
   element.setAttribute('href', url);
 }
 
+const DEFAULT_SOCIAL_IMAGE = 'https://zando-africa.vercel.app/home/zando-logo.png';
+
 export function updateProductSocialMeta(product: { title: string; description?: string | null; photos?: string[] | null }): void {
   const title = `${product.title} | Zando Africa`;
   const description = (product.description?.trim() || 'Découvrez cette annonce sur Zando Africa.').slice(0, 240);
-  const image = product.photos?.[0] || 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvyf87pc/app-f5tomiygsu81/20261017/1000500253.png';
+  const image = product.photos?.[0] || DEFAULT_SOCIAL_IMAGE;
   const pageUrl = window.location.href.split('#')[0];
   document.title = title;
   upsertCanonical(pageUrl);
