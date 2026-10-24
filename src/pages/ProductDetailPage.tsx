@@ -595,6 +595,55 @@ export const ProductDetailPage: React.FC = () => {
               ))}
             </div>
           )}
+
+          {/* Buyer payment tools and digital-product actions stay directly below the product photo. */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              <span className="text-muted-foreground">⇄ Devise affichée :</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {currencyOptions.map(cur => (
+                  <button
+                    key={cur}
+                    type="button"
+                    onClick={() => setSelectedCurrency(cur)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      selectedCurrency === cur
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    {cur}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {product.category_id === 'digital-products' && (
+              <div className="space-y-3">
+                <PaymentLogosMarquee />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleDigitalPreview()}
+                  disabled={previewLoading}
+                  className="w-full h-11 rounded-2xl font-bold text-sm gap-2 cursor-pointer"
+                >
+                  {previewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                  <span>{previewLoading ? 'Chargement de l’aperçu...' : 'Consulter l’aperçu gratuit'}</span>
+                </Button>
+                {previewError && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{previewError}</p>}
+                {isValidMerchantUrl(merchantLink || '') ? (
+                  <Button type="button" onClick={handleMerchantSiteClick} className="w-full h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-sm sm:text-base gap-2 shadow-md cursor-pointer">
+                    <ShoppingBag className="w-5 h-5 shrink-0" />
+                    <span className="truncate">Acheter vers le site marchand</span>
+                    <ExternalLink className="w-4 h-4 ml-1 shrink-0" />
+                  </Button>
+                ) : (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 text-center">Le lien marchand de cette annonce est indisponible.</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Column: Information, Pricing, Seller & Actions matching Image 1 */}
@@ -670,27 +719,6 @@ export const ProductDetailPage: React.FC = () => {
             <div className="space-y-3">
               <div className="text-3xl sm:text-4xl font-black text-red-600 tracking-tight">
                 {formattedPrice}
-              </div>
-
-              {/* Keep common choices visible and add the visitor's detected ISO currency when needed. */}
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className="text-muted-foreground">⇄ Devise affichée :</span>
-                <div className="flex items-center gap-1.5">
-                  {currencyOptions.map(cur => (
-                    <button
-                      key={cur}
-                      type="button"
-                      onClick={() => setSelectedCurrency(cur)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                        selectedCurrency === cur
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                      }`}
-                    >
-                      {cur}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Invoiced Currency warning matching Image 1 */}
@@ -811,31 +839,7 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* ACTION BUTTONS */}
             <div className="space-y-3 pt-1">
-              {product.category_id === 'digital-products' ? (
-                <div className="space-y-3">
-                  <PaymentLogosMarquee />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void handleDigitalPreview()}
-                    disabled={previewLoading}
-                    className="w-full h-11 rounded-2xl font-bold text-sm gap-2 cursor-pointer"
-                  >
-                    {previewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
-                    <span>{previewLoading ? 'Chargement de l’aperçu...' : 'Consulter l’aperçu gratuit'}</span>
-                  </Button>
-                  {previewError && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{previewError}</p>}
-                  {isValidMerchantUrl(merchantLink || '') ? (
-                    <Button type="button" onClick={handleMerchantSiteClick} className="w-full h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-sm sm:text-base gap-2 shadow-md cursor-pointer">
-                      <ShoppingBag className="w-5 h-5 shrink-0" />
-                      <span className="truncate">Acheter vers le site marchand</span>
-                      <ExternalLink className="w-4 h-4 ml-1 shrink-0" />
-                    </Button>
-                  ) : (
-                    <p className="text-xs text-rose-600 dark:text-rose-400 text-center">Le lien marchand de cette annonce est indisponible.</p>
-                  )}
-                </div>
-              ) : merchantLink && (
+              {product.category_id !== 'digital-products' && merchantLink && (
                 <div className="space-y-1">
                   <Button
                     onClick={handleMerchantSiteClick}
