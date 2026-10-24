@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import type { Product } from '@/types/zando';
 import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
-import { Heart, Clock, Eye, Phone } from 'lucide-react';
-import { WhatsAppIcon } from '@/components/common/WhatsAppIcon';
+import { Heart, Clock, Eye } from 'lucide-react';
 import { CountryFlag } from '@/components/common/CountryFlag';
 
 interface ProductCardProps {
@@ -33,36 +32,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     1,
     Math.ceil((new Date(product.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
   );
-
-  const handleCall = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    zandoApi.incrementCallClicks(product.id);
-    zandoApi.trackEvent({
-      event_type: 'call_click',
-      item_id: product.id,
-      country_code: product.country_id,
-      city: product.city
-    });
-    window.location.href = `tel:${product.seller_phone}`;
-  };
-
-  const handleWhatsApp = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    zandoApi.incrementWhatsAppClicks(product.id);
-    zandoApi.trackEvent({
-      event_type: 'whatsapp_click',
-      item_id: product.id,
-      country_code: product.country_id,
-      city: product.city
-    });
-
-    // Clean phone number for WhatsApp
-    const cleanNumber = product.seller_phone.replace(/[^0-9]/g, '');
-    const message = encodeURIComponent(
-      `Bonjour ${product.seller_name}, je vous contacte depuis Zando Africa à propos de votre annonce : "${product.title}" (${formattedPrice} ${product.currency}). Est-elle toujours disponible ?`
-    );
-    window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank');
-  };
 
   const handleCardClick = () => {
     zandoApi.incrementProductViews(product.id);
@@ -164,38 +133,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
 
-        {/* Action Buttons */}
-        {variant === 'popular' ? (
-          <Link
-            to={`/produit/${product.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full py-2 px-3 rounded-full bg-muted/80 hover:bg-primary/10 hover:text-primary text-xs font-semibold text-center transition-colors block"
-          >
-            Consulter l'annonce
-          </Link>
-        ) : (
-          <div className="pt-2 flex flex-col gap-2">
-            {/* Call button */}
-            <button
-              type="button"
-              onClick={handleCall}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-xs active:scale-98 min-w-0"
-            >
-              <Phone className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Appeler maintenant</span>
-            </button>
-
-            {/* WhatsApp button with official logo (Requirement 5) */}
-            <button
-              type="button"
-              onClick={handleWhatsApp}
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs active:scale-98 min-w-0"
-            >
-              <WhatsAppIcon className="w-4 h-4 fill-white shrink-0" />
-              <span className="truncate">Discuter sur WhatsApp</span>
-            </button>
-          </div>
-        )}
+        {/* One entry point from the home feed to the full product interface. */}
+        <Link
+          to={`/produit/${product.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs active:scale-98 min-w-0"
+        >
+          <Eye className="w-4 h-4 shrink-0" />
+          <span className="truncate">Consulter maintenant</span>
+        </Link>
       </div>
     </div>
   );
