@@ -26,7 +26,9 @@ import { createMonerooPayment } from '@/services/monerooPayments';
 import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBooks';
 import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
 import { normalizeProductCoverImage, normalizeSellerAvatarImage } from '@/lib/productImages';
-import { MAX_IMAGE_UPLOAD_BYTES, validateImageFile } from '@/lib/imageValidation';
+import { validateImageFile } from '@/lib/imageValidation';
+
+const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
 
 export const PublishProductPage: React.FC = () => {
   const { countries, categories, selectedCountry, settings } = useZando();
@@ -128,11 +130,7 @@ export const PublishProductPage: React.FC = () => {
     const uploadedUrls: string[] = [];
 
     for (const originalFile of files) {
-      if (originalFile.size > MAX_IMAGE_UPLOAD_BYTES) {
-        toast.error(`« ${originalFile.name} » : la photo ne doit pas dépasser 2 Mo.`);
-        continue;
-      }
-      const validationError = await validateImageFile(originalFile);
+      const validationError = await validateImageFile(originalFile, MAX_SOURCE_IMAGE_BYTES);
       if (validationError) {
         toast.error(`« ${originalFile.name} » : ${validationError}`);
         continue;
@@ -149,6 +147,8 @@ export const PublishProductPage: React.FC = () => {
         if (photoUrls.length === 0 && uploadedUrls.length === 0) {
           file = await normalizeProductCoverImage(originalFile);
           toast.info('La photo de couverture est adaptée au format portrait 1024 × 1536.');
+        } else {
+          file = await normalizeSellerAvatarImage(originalFile);
         }
         const result = await zandoApi.uploadMedia(file, 'products');
         if (result.url) {
@@ -194,11 +194,7 @@ export const PublishProductPage: React.FC = () => {
     if (!e.target.files || e.target.files.length === 0) return;
     const originalFile = e.target.files[0];
     e.target.value = '';
-    if (originalFile.size > MAX_IMAGE_UPLOAD_BYTES) {
-      toast.error('La photo ne doit pas dépasser 2 Mo.');
-      return;
-    }
-    const validationError = await validateImageFile(originalFile);
+    const validationError = await validateImageFile(originalFile, MAX_SOURCE_IMAGE_BYTES);
     if (validationError) {
       toast.error(validationError);
       return;

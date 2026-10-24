@@ -94,7 +94,10 @@ export async function validateImageFile(
   maxBytes = MAX_IMAGE_UPLOAD_BYTES
 ): Promise<string | null> {
   if (!file.size) return 'Le fichier image est vide.';
-  if (file.size > maxBytes) return 'La photo ne doit pas dépasser 2 Mo.';
+  if (file.size > maxBytes) {
+    const maxMiB = Math.round((maxBytes / (1024 * 1024)) * 10) / 10;
+    return `La photo ne doit pas dépasser ${maxMiB} Mo.`;
+  }
 
   let detectedMime: SupportedImageMime | null;
   try {
