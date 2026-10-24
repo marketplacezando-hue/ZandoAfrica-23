@@ -124,14 +124,10 @@ export async function validateImageFile(
   } catch {
     return 'Impossible de lire le fichier image sélectionné.';
   }
-  if (!detectedMime) {
-    return 'Format non pris en charge. Images acceptées : JPG/JPEG, PNG, WebP, GIF ou AVIF.';
-  }
-
   const declaredMime = file.type.trim().toLowerCase();
-  if (declaredMime && declaredMime !== 'application/octet-stream') {
+  if (detectedMime && declaredMime && declaredMime !== 'application/octet-stream') {
     const canonicalMime = MIME_ALIASES[declaredMime];
-    if (!canonicalMime || canonicalMime !== detectedMime) {
+    if (canonicalMime && canonicalMime !== detectedMime) {
       return 'Le type déclaré ne correspond pas au contenu réel du fichier image.';
     }
   }

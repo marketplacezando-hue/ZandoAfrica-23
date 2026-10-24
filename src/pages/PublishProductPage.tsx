@@ -681,14 +681,14 @@ export const PublishProductPage: React.FC = () => {
                     <span>Choisir ma photo de profil</span>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      accept="image/*"
                       onChange={handleAvatarSelect}
                       className="hidden"
                       disabled={uploadingAvatar}
                     />
                   </label>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    JPG/JPEG, PNG, WebP, GIF ou AVIF · 2 Mo maximum. Permet aux acheteurs de reconnaître votre boutique.
+                    Tous les formats image lisibles par votre appareil · compression automatique avant l’envoi. Permet aux acheteurs de reconnaître votre boutique.
                   </p>
                   {uploadingAvatar && <p className="text-[11px] text-primary font-semibold animate-pulse">Téléversement de la photo de profil...</p>}
                   {sellerPhotoFileInfo && <p className="mt-1 break-all text-[11px] text-muted-foreground">{sellerPhotoFileInfo}</p>}
@@ -739,7 +739,7 @@ export const PublishProductPage: React.FC = () => {
                     <span className="text-[10px] text-muted-foreground">Depuis la galerie</span>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      accept="image/*"
                       multiple
                       onChange={handlePhotoSelect}
                       className="hidden"
@@ -749,7 +749,7 @@ export const PublishProductPage: React.FC = () => {
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Formats acceptés : JPG/JPEG, PNG, WebP, GIF et AVIF · 2 Mo maximum par photo. Chaque image est vérifiée avant l’envoi ; la version optimisée respecte aussi le plafond de 2 Mo.
+                Tous les formats image lisibles par votre appareil · jusqu’à 12 Mo avant compression. Chaque image est convertie et optimisée à moins de 2 Mo avant l’envoi.
               </p>
               {uploadingPhotos && <p className="text-xs text-primary font-medium animate-pulse">Téléversement des photos en cours...</p>}
             </div>

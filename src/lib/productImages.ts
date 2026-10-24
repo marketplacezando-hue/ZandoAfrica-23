@@ -3,6 +3,11 @@ import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/imageValidation';
 const COVER_WIDTH = 1024;
 const COVER_HEIGHT = 1536;
 
+function isImageFile(file: File): boolean {
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  return file.type.startsWith('image/') || ['bmp', 'heic', 'heif', 'ico', 'j2c', 'jp2', 'jpf', 'jxl', 'svg', 'tif', 'tiff'].includes(extension);
+}
+
 async function toJpegBlob(canvas: HTMLCanvasElement, initialQuality: number): Promise<Blob> {
   for (const quality of [initialQuality, 0.84, 0.76, 0.68, 0.58, 0.48, 0.38]) {
     const blob = await new Promise<Blob>((resolve, reject) => {
@@ -37,7 +42,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  * une toile portrait 2:3 et les marges sont remplies en blanc si nécessaire.
  */
 export async function normalizeProductCoverImage(file: File): Promise<File> {
-  if (!file.type.startsWith('image/')) return file;
+  if (!isImageFile(file)) return file;
 
   const image = await loadImage(file);
   if (image.naturalWidth === COVER_WIDTH && image.naturalHeight === COVER_HEIGHT) return file;
@@ -67,7 +72,7 @@ export async function normalizeProductCoverImage(file: File): Promise<File> {
 
 /** Convertit une photo de profil dans un format universel accepté par le stockage. */
 export async function normalizeSellerAvatarImage(file: File): Promise<File> {
-  if (!file.type.startsWith('image/')) throw new Error('Veuillez sélectionner un fichier image.');
+  if (!isImageFile(file)) throw new Error('Veuillez sélectionner un fichier image.');
   const image = await loadImage(file);
   const maxSide = 1200;
   const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
