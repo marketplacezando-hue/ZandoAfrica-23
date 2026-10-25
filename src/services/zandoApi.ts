@@ -562,6 +562,7 @@ export const zandoApi = {
     const rawType = file.type.toLowerCase();
     const imageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'];
     const isImage = rawType.startsWith('image/') || imageExtensions.includes(extension);
+    const isHeic = ['image/heic', 'image/heif'].includes(rawType) || ['heic', 'heif', 'hif'].includes(extension);
     let contentType = aliases[rawType] || mimeByExtension[extension] || rawType;
     if (isImage) {
       const validationError = await validateImageFile(file);
@@ -573,8 +574,22 @@ export const zandoApi = {
       return { url: null, error: 'Format non pris en charge. Images acceptées : JPG/JPEG, PNG, WebP, GIF ou AVIF.' };
     }
 
+    let uploadFile = file;
+    if (isHeic) {
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      const conversionResponse = await fetch('/api/convert-image', { method: 'POST', body: formData });
+      if (!conversionResponse.ok) {
+        const conversionResult = await conversionResponse.json().catch(() => ({})) as { error?: string };
+        return { url: null, error: conversionResult.error || 'La conversion HEIC/HEIF a échoué.' };
+      }
+      const convertedBlob = await conversionResponse.blob();
+      uploadFile = new File([convertedBlob], `${file.name.replace(/\.[^.]+$/, '') || 'image'}-converted.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+      contentType = 'image/jpeg';
+    }
+
     const sizeLimit = isImage ? MAX_IMAGE_UPLOAD_BYTES : 50 * 1024 * 1024;
-    if (file.size > sizeLimit) {
+    if (uploadFile.size > sizeLimit) {
       return { url: null, error: isImage ? 'La photo ne doit pas dépasser 2 Mo.' : 'La vidéo ne doit pas dépasser 50 Mo.' };
     }
 
@@ -585,7 +600,7 @@ export const zandoApi = {
           'Content-Type': contentType,
           'X-Media-Folder': folder
         },
-        body: file
+          body: uploadFile
       });
       if (!response.ok) {
         const result = await response.json().catch(() => ({})) as { error?: string };

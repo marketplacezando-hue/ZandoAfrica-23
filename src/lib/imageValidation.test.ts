@@ -7,7 +7,9 @@ describe('imageValidation', () => {
     [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), 'image/png'],
     [new TextEncoder().encode('GIF89a'), 'image/gif'],
     [new TextEncoder().encode('RIFF0000WEBP'), 'image/webp'],
-    [new TextEncoder().encode('\u0000\u0000\u0000\u0000ftypavif\u0000\u0000\u0000\u0000'), 'image/avif']
+    [new TextEncoder().encode('\u0000\u0000\u0000\u0000ftypavif\u0000\u0000\u0000\u0000'), 'image/avif'],
+    [new TextEncoder().encode('\u0000\u0000\u0000\u0018ftypheic\u0000\u0000\u0000\u0000mif1'), 'image/heic'],
+    [new TextEncoder().encode('\u0000\u0000\u0000\u0018ftypmif1\u0000\u0000\u0000\u0000heic'), 'image/heif']
   ])('détecte le type réel %s', (bytes, expected) => {
     expect(detectImageMimeFromBytes(bytes)).toBe(expected);
   });

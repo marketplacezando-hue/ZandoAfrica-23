@@ -5,7 +5,9 @@ export type SupportedImageMime =
   | 'image/png'
   | 'image/webp'
   | 'image/gif'
-  | 'image/avif';
+  | 'image/avif'
+  | 'image/heic'
+  | 'image/heif';
 
 const MIME_ALIASES: Record<string, SupportedImageMime> = {
   'image/jpeg': 'image/jpeg',
@@ -15,7 +17,9 @@ const MIME_ALIASES: Record<string, SupportedImageMime> = {
   'image/x-png': 'image/png',
   'image/webp': 'image/webp',
   'image/gif': 'image/gif',
-  'image/avif': 'image/avif'
+  'image/avif': 'image/avif',
+  'image/heic': 'image/heic',
+  'image/heif': 'image/heif'
 };
 
 function ascii(bytes: Uint8Array, start: number, end: number): string {
@@ -66,6 +70,9 @@ export function detectImageMimeFromBytes(bytes: Uint8Array): SupportedImageMime 
     }
     if (brands.some(brand => brand === 'avif' || brand === 'avis')) {
       return 'image/avif';
+    }
+    if (brands.some(brand => ['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1'].includes(brand))) {
+      return ['mif1', 'msf1'].includes(brands[0]) ? 'image/heif' : 'image/heic';
     }
   }
 
@@ -131,6 +138,8 @@ export async function validateImageFile(
       return 'Le type déclaré ne correspond pas au contenu réel du fichier image.';
     }
   }
+
+  if (detectedMime === 'image/heic' || detectedMime === 'image/heif') return null;
 
   try {
     if (!(await canDecodeImage(file))) {
