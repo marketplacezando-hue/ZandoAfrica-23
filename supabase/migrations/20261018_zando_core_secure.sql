@@ -593,7 +593,9 @@ INSERT INTO public.countries (id,name,flag_emoji,dial_code,currency,sort_order) 
   ('CG','Congo-Brazzaville','🇨🇬','+242','XAF',1),('CD','RDC','🇨🇩','+243','CDF',2),
   ('CI','Côte d’Ivoire','🇨🇮','+225','XOF',3),('SN','Sénégal','🇸🇳','+221','XOF',4),
   ('BJ','Bénin','🇧🇯','+229','XOF',5),('CM','Cameroun','🇨🇲','+237','XAF',6),
-  ('BF','Burkina Faso','🇧🇫','+226','XOF',7),('ML','Mali','🇲🇱','+223','XOF',8)
+  ('BF','Burkina Faso','🇧🇫','+226','XOF',7),('ML','Mali','🇲🇱','+223','XOF',8),
+  ('TG','Togo','🇹🇬','+228','XOF',9),('GA','Gabon','🇬🇦','+241','XAF',10),
+  ('TD','Tchad','🇹🇩','+235','XAF',11),('GN','Guinée','🇬🇳','+224','GNF',12)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.categories (id,name,icon,sort_order) VALUES

@@ -68,7 +68,15 @@ const FALLBACK_COUNTRIES: Country[] = [
   { id: 'CG', name: 'Congo-Brazzaville', flag_emoji: '🇨🇬', dial_code: '+242', currency: 'XAF', is_active: true, sort_order: 1 },
   { id: 'CD', name: 'RDC', flag_emoji: '🇨🇩', dial_code: '+243', currency: 'CDF', is_active: true, sort_order: 2 },
   { id: 'CI', name: 'Côte d’Ivoire', flag_emoji: '🇨🇮', dial_code: '+225', currency: 'XOF', is_active: true, sort_order: 3 },
-  { id: 'SN', name: 'Sénégal', flag_emoji: '🇸🇳', dial_code: '+221', currency: 'XOF', is_active: true, sort_order: 4 }
+  { id: 'SN', name: 'Sénégal', flag_emoji: '🇸🇳', dial_code: '+221', currency: 'XOF', is_active: true, sort_order: 4 },
+  { id: 'BJ', name: 'Bénin', flag_emoji: '🇧🇯', dial_code: '+229', currency: 'XOF', is_active: true, sort_order: 5 },
+  { id: 'CM', name: 'Cameroun', flag_emoji: '🇨🇲', dial_code: '+237', currency: 'XAF', is_active: true, sort_order: 6 },
+  { id: 'BF', name: 'Burkina Faso', flag_emoji: '🇧🇫', dial_code: '+226', currency: 'XOF', is_active: true, sort_order: 7 },
+  { id: 'ML', name: 'Mali', flag_emoji: '🇲🇱', dial_code: '+223', currency: 'XOF', is_active: true, sort_order: 8 },
+  { id: 'TG', name: 'Togo', flag_emoji: '🇹🇬', dial_code: '+228', currency: 'XOF', is_active: true, sort_order: 9 },
+  { id: 'GA', name: 'Gabon', flag_emoji: '🇬🇦', dial_code: '+241', currency: 'XAF', is_active: true, sort_order: 10 },
+  { id: 'TD', name: 'Tchad', flag_emoji: '🇹🇩', dial_code: '+235', currency: 'XAF', is_active: true, sort_order: 11 },
+  { id: 'GN', name: 'Guinée', flag_emoji: '🇬🇳', dial_code: '+224', currency: 'GNF', is_active: true, sort_order: 12 }
 ];
 
 const FALLBACK_CATEGORIES: Category[] = [

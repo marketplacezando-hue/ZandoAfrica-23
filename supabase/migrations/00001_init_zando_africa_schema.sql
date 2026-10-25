@@ -251,7 +251,11 @@ INSERT INTO countries (id, name, flag_emoji, dial_code, currency, sort_order) VA
 ('BJ', 'Bénin', '🇧🇯', '+229', 'XOF', 5),
 ('CM', 'Cameroun', '🇨🇲', '+237', 'XAF', 6),
 ('BF', 'Burkina Faso', '🇧🇫', '+226', 'XOF', 7),
-('ML', 'Mali', '🇲🇱', '+223', 'XOF', 8)
+('ML', 'Mali', '🇲🇱', '+223', 'XOF', 8),
+('TG', 'Togo', '🇹🇬', '+228', 'XOF', 9),
+('GA', 'Gabon', '🇬🇦', '+241', 'XAF', 10),
+('TD', 'Tchad', '🇹🇩', '+235', 'XAF', 11),
+('GN', 'Guinée', '🇬🇳', '+224', 'GNF', 12)
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, flag_emoji = EXCLUDED.flag_emoji, dial_code = EXCLUDED.dial_code, currency = EXCLUDED.currency;
 
 -- Categories
