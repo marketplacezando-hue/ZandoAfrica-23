@@ -23,6 +23,14 @@ const FlagArtwork: React.FC<{ countryId: string }> = ({ countryId }) => {
       return <><rect width="30" height="10" fill="#EF2B2D" /><rect y="10" width="30" height="10" fill="#009E49" /><path d="m15 5 1.65 3.35 3.7.54-2.68 2.61.63 3.69L15 13.45l-3.3 1.74.63-3.69-2.68-2.61 3.7-.54z" fill="#FCD116" /></>;
     case 'ML':
       return <><rect width="10" height="20" fill="#14B53A" /><rect x="10" width="10" height="20" fill="#FCD116" /><rect x="20" width="10" height="20" fill="#CE1126" /></>;
+    case 'TG':
+      return <><rect width="30" height="20" fill="#FFCE00" /><rect y="0" width="30" height="4" fill="#006A4E" /><rect y="8" width="30" height="4" fill="#006A4E" /><rect y="16" width="30" height="4" fill="#006A4E" /><path d="M0 0h12v10H0z" fill="#D21034" /><path d="m6 2.5 0.88 1.79 1.98.29-1.43 1.39.34 1.97L6 7.01 4.23 7.94l.34-1.97-1.43-1.39 1.98-.29z" fill="#FFF" /></>;
+    case 'GA':
+      return <><rect width="30" height="6.67" fill="#009E60" /><rect y="6.67" width="30" height="6.66" fill="#FCD116" /><rect y="13.33" width="30" height="6.67" fill="#3A75C4" /></>;
+    case 'TD':
+      return <><rect width="10" height="20" fill="#002664" /><rect x="10" width="10" height="20" fill="#FECB00" /><rect x="20" width="10" height="20" fill="#C60C30" /></>;
+    case 'GN':
+      return <><rect width="10" height="20" fill="#CE1126" /><rect x="10" width="10" height="20" fill="#FCD116" /><rect x="20" width="10" height="20" fill="#009460" /></>;
     default:
       return <><rect width="30" height="20" fill="#E5E7EB" /><circle cx="15" cy="10" r="7" fill="#9CA3AF" /><path d="M12 10h6M15 7v6" stroke="#fff" strokeWidth="1.5" /></>;
   }

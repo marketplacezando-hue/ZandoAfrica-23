@@ -173,7 +173,16 @@ export const ZandoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const refreshSettings = async () => { try { setSettings(await zandoApi.getPlatformSettings()); } catch (error) { console.error('Failed to load platform settings:', error); } };
-  const setSelectedCountry = (country: Country) => { setSelectedCountryState(country); localStorage.setItem('zando_selected_country', country.id); };
+  const setSelectedCountry = (country: Country) => {
+    setSelectedCountryState(country);
+    localStorage.setItem('zando_selected_country', country.id);
+    const countryCurrency = normalizeCurrency(country.currency);
+    if (countryCurrency) {
+      setSelectedCurrencyState(countryCurrency);
+      localStorage.setItem('zando_display_currency', countryCurrency);
+      localStorage.setItem('zando_currency_manual', '1');
+    }
+  };
   const setSelectedCurrency = (currency: string) => {
     const normalized = normalizeCurrency(currency);
     if (!normalized) return;
