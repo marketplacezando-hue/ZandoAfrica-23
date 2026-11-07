@@ -86,7 +86,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
         </button>
       </div>
 
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar sm:justify-between sm:gap-4">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar sm:justify-between sm:gap-3">
         {categories.map((category, index) => {
           const style = CATEGORY_STYLES[index % CATEGORY_STYLES.length];
           const Icon = getIcon(category.icon);
@@ -99,10 +99,10 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               key={category.id}
               onClick={() => onSelectCategory(category.id)}
               aria-pressed={isSelected}
-              className={`group flex w-[82px] shrink-0 flex-col items-center gap-2 rounded-2xl px-1 py-1 text-center transition-transform active:scale-95 sm:w-[96px] ${isSelected ? 'scale-[1.04]' : ''}`}
+              className={`group flex w-[76px] shrink-0 flex-col items-center gap-1.5 rounded-xl px-1 py-1 text-center transition-transform active:scale-95 sm:w-[88px] ${isSelected ? 'scale-[1.04]' : ''}`}
             >
-              <span className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-md transition-shadow group-hover:shadow-lg sm:h-[72px] sm:w-[72px] ${style.background} ${isSelected ? 'ring-4 ring-emerald-200 ring-offset-2' : ''}`}>
-                <Icon className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
+              <span className={`flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md transition-shadow group-hover:shadow-lg sm:h-14 sm:w-14 ${style.background} ${isSelected ? 'ring-2 ring-emerald-200 ring-offset-1' : ''}`}>
+                <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
               </span>
               <span className={`whitespace-pre-line text-[11px] font-semibold leading-[1.15] sm:text-xs ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
                 {label}

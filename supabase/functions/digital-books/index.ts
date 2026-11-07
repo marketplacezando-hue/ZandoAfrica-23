@@ -474,16 +474,49 @@ async function preview(request: Request, body: JsonRecord, origin: string | null
   const db = database();
   requireWorker();
   const productId = await requirePublishedProduct(db, body.product_id);
-  const { data: book, error } = await db.from('digital_books').select('preview_key,page_count')
+  const { data: book, error } = await db.from('digital_books').select('original_key,page_count')
     .eq('product_id', productId).eq('status', 'published').maybeSingle();
   checkDatabaseError(error, 'digital_books');
   if (!book) throw new HttpError(404, 'book_not_found', 'L’aperçu de ce livre numérique est introuvable.');
-  if (!Number.isSafeInteger(book.page_count) || book.page_count < 1 || !validPrivateKey(book.preview_key, 'previews')) {
+  if (!Number.isSafeInteger(book.page_count) || book.page_count < 1 || !validPrivateKey(book.original_key, 'originals')) {
     throw new HttpError(503, 'book_preview_metadata_invalid', 'Les métadonnées privées de l’aperçu sont invalides.');
   }
-  // Fetch ONLY the preview key. The original is never used as an approximation.
-  const result = await workerRequest('previews', book.preview_key);
-  return pdfResponse(result, origin, 'inline', book.page_count);
+  // Rebuild the preview from the private original on every request. This also
+  // upgrades previews that were generated with the former five-page limit,
+  // while the original PDF never leaves the server.
+  const originalResponse = await workerRequest('originals', book.original_key);
+  const original = new Uint8Array(await originalResponse.arrayBuffer());
+  let source: PDFDocument;
+  try {
+    source = await PDFDocument.load(original, {
+      ignoreEncryption: false,
+      throwOnInvalidObject: true,
+      updateMetadata: false,
+    });
+  } catch {
+    throw new HttpError(422, 'invalid_pdf', 'Le fichier numérique original est invalide.');
+  }
+  const indices = Array.from({ length: Math.min(20, source.getPageCount()) }, (_, index) => index);
+  if (!indices.length) throw new HttpError(422, 'empty_pdf', 'Le PDF doit contenir au moins une page.');
+  try {
+    for (const index of indices) {
+      const page = source.getPage(index);
+      for (const name of ['Annots', 'AA', 'Metadata', 'PieceInfo', 'Thumb', 'B', 'PresSteps', 'SeparationInfo']) {
+        page.node.delete(PDFName.of(name));
+      }
+    }
+    const derived = await PDFDocument.create();
+    const pages = await derived.copyPages(source, indices);
+    for (const page of pages) derived.addPage(page);
+    const preview = new Uint8Array(await derived.save());
+    const headers = responseHeaders(origin);
+    headers.set('Content-Type', 'application/pdf');
+    headers.set('Content-Disposition', 'inline; filename="apercu.pdf"');
+    headers.set('X-Digital-Page-Count', String(indices.length));
+    return new Response(preview, { status: 200, headers });
+  } catch {
+    throw new HttpError(422, 'preview_generation_failed', 'Impossible de générer un aperçu autonome de ce PDF.');
+  }
 }
 function validateCustomer(value: unknown): void {
   if (!isRecord(value)) throw new HttpError(400, 'invalid_customer', 'Les coordonnées du client sont invalides.');
