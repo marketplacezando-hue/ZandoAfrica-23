@@ -50,6 +50,7 @@ const App: React.FC = () => (
           <Suspense fallback={<PageLoading />}>
             <Routes>
               <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+              <Route path="/p/:id" element={<PublicLayout><ProductDetailPage /></PublicLayout>} />
               <Route path="/produit/:id" element={<PublicLayout><ProductDetailPage /></PublicLayout>} />
               <Route path="/publier" element={<PublicLayout><PublishProductPage /></PublicLayout>} />
               <Route path="/passer-pub" element={<PublicLayout><BannerAdPage /></PublicLayout>} />

@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { decodeProductRouteId } from '../product-route-id';
 
 type ProductRow = {
   photos?: string[] | null;
@@ -22,7 +23,8 @@ const BRAND_LOGO = 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvy
 function getProductId(req: VercelRequest): string | null {
   const rawId = req.query.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
-  return id && /^[0-9a-f-]{12,}$/i.test(id) ? id : null;
+  const productId = id ? decodeProductRouteId(id) : null;
+  return productId && /^[0-9a-f-]{12,}$/i.test(productId) ? productId : null;
 }
 
 async function getProductImageUrl(productId: string): Promise<string> {

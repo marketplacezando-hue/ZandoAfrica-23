@@ -6,6 +6,17 @@
       "destination": "/api/sitemap.xml"
     },
     {
+      "source": "/p/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|FacebookExternalHit|facebookcatalog|FacebookCatalog|facebookplatform|FacebookPlatform|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Pinterest|Slackbot|Discordbot|Googlebot|bingbot|Applebot).*"
+        }
+      ],
+      "destination": "/api/social-product/:id"
+    },
+    {
       "source": "/produit/:id",
       "has": [
         {

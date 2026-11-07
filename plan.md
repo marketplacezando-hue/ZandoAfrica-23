@@ -1,6 +1,8 @@
 
-## Mise à jour demandée — Accueil marketplace
+## Mise à jour demandée — interface compacte, aperçu sécurisé et URLs courtes
 
-L’accueil est réorganisé pour reprendre la composition de la capture fournie : en-tête compact avec logo, pays, publication et menu; recherche arrondie; bannière marketplace verte; bannière PUB VIP bleue; puis catégories colorées. Les deux illustrations de bannière sont des visuels de fond locaux, tandis que les textes, CTA, flèches et indicateurs restent des éléments React accessibles et interactifs.
+Les changements réutilisent l’architecture React/Vite, les composants existants et les fonctions Supabase/Vercel en place. L’identité visuelle est conservée, avec une densité légèrement réduite : logo d’en-tête, tuiles de catégories, icônes et boutons sont plus compacts et restent adaptatifs sur mobile, tablette et ordinateur.
 
-Les fonctionnalités existantes sont conservées : recherche synchronisée dans l’URL, sélection de pays, filtrage par catégorie, carrousels, chargement des annonces et de la publicité VIP, rafraîchissement, écoute Supabase Realtime, navigation vers la publication et menu mobile. Un état de secours affiche les pays et catégories de base pendant une indisponibilité temporaire de l’API sans remplacer les données Supabase lorsqu’elles sont disponibles.
+Le lecteur PDF conserve son parcours d’achat et de téléchargement complet, mais l’aperçu public est borné à 20 pages côté client et côté génération serveur. Les descriptions détaillées sont affichées dans un cadre à hauteur limitée avec défilement vertical interne.
+
+Les nouvelles navigations utilisent `/p/:id`, un identifiant URL-safe court et réversible dérivé de l’UUID existant, sans migration ni modification des produits. Les anciennes routes `/produit/:id` restent déclarées et fonctionnelles. Les métadonnées sociales, le sitemap et la réécriture Vercel suivent le nouveau chemin court.

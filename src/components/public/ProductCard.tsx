@@ -5,6 +5,7 @@ import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import { Heart, Clock, Eye } from 'lucide-react';
 import { CountryFlag } from '@/components/common/CountryFlag';
+import { shortProductPath } from '@/lib/productLinks';
 
 interface ProductCardProps {
   product: Product;
@@ -135,11 +136,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* One entry point from the home feed to the full product interface. */}
         <Link
-          to={`/produit/${product.id}`}
+          to={shortProductPath(product.id)}
           onClick={(e) => e.stopPropagation()}
-          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-xs active:scale-98 min-w-0"
+          className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-98 min-w-0"
         >
-          <Eye className="w-4 h-4 shrink-0" />
+          <Eye className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">Consulter maintenant</span>
         </Link>
       </div>

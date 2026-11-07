@@ -27,6 +27,7 @@ import { uploadDigitalBook, validateDigitalBookFile } from '@/services/digitalBo
 import { isValidMerchantUrl, normalizeMerchantUrl } from '@/lib/digitalProducts';
 import { normalizeProductCoverImage, normalizeSellerAvatarImage } from '@/lib/productImages';
 import { validateImageFile } from '@/lib/imageValidation';
+import { shortProductPath } from '@/lib/productLinks';
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
 
@@ -1032,7 +1033,7 @@ export const PublishProductPage: React.FC = () => {
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               {publishedId && publicationStatus === 'published' && (
                 <Button
-                  onClick={() => navigate(`/produit/${publishedId}`)}
+                  onClick={() => publishedId && navigate(shortProductPath(publishedId))}
                   className="w-full sm:w-auto h-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
                 >
                   Voir mon annonce

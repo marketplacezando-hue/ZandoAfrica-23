@@ -1,3 +1,5 @@
+import { decodeProductRouteId, encodeProductRouteId } from '../product-route-id';
+
 type ProductSocialData = {
   title?: string;
   description?: string | null;
@@ -47,7 +49,7 @@ function renderSocialHtml(product: ProductSocialData | null, productId: string, 
   const image = isProduct && product?.photos?.[0]
     ? `${siteUrl}/api/social-product-image/${encodeURIComponent(productId)}`
     : BRAND_LOGO;
-  const pageUrl = `${siteUrl}/produit/${encodeURIComponent(productId)}`;
+  const pageUrl = `${siteUrl}/p/${encodeProductRouteId(productId)}`;
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
   const safeImage = escapeHtml(image);
@@ -87,7 +89,8 @@ function renderSocialHtml(product: ProductSocialData | null, productId: string, 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rawId = req.query.id;
-  const productId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const routeId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const productId = routeId ? decodeProductRouteId(routeId) : routeId;
   const siteUrl = getSiteUrl();
   if (!productId || !/^[0-9a-f-]{12,}$/i.test(productId)) {
     res.status(400).send('Identifiant de produit invalide.');

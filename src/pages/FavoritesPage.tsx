@@ -4,6 +4,7 @@ import { useZando } from '@/contexts/ZandoContext';
 import { zandoApi } from '@/services/zandoApi';
 import type { Product } from '@/types/zando';
 import { ProductCard } from '@/components/public/ProductCard';
+import { shortProductPath } from '@/lib/productLinks';
 import { Heart, ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -70,7 +71,7 @@ export const FavoritesPage: React.FC = () => {
               key={p.id}
               product={p}
               variant="latest"
-              onProductClick={() => navigate(`/produit/${p.id}`)}
+              onProductClick={() => navigate(shortProductPath(p.id))}
             />
           ))}
         </div>

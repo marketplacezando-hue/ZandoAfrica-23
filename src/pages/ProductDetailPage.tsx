@@ -50,6 +50,7 @@ import { toast } from 'sonner';
 import { isValidMerchantUrl } from '@/lib/digitalProducts';
 import { PaymentLogosMarquee } from '@/components/public/PaymentLogosMarquee';
 import { updateProductSocialMeta } from '@/lib/socialMeta';
+import { fromProductRouteId, shortProductPath } from '@/lib/productLinks';
 
 type DigitalBooksApi = {
   getDigitalPreview?: (productId: string) => Promise<{ blobUrl: string; totalPages: number; error?: string }>;
@@ -58,7 +59,7 @@ const digitalBooksApi = digitalBooks as unknown as DigitalBooksApi;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-const MAX_PREVIEW_PAGES = 10;
+const MAX_PREVIEW_PAGES = 20;
 
 const PdfPreviewReader: React.FC<{ blobUrl: string; maxPages?: number }> = ({ blobUrl, maxPages = MAX_PREVIEW_PAGES }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -151,7 +152,8 @@ const PdfPreviewReader: React.FC<{ blobUrl: string; maxPages?: number }> = ({ bl
 };
 
 export const ProductDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = routeId ? fromProductRouteId(routeId) : undefined;
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite, selectedCurrency, setSelectedCurrency, selectedCountry, formatPrice } = useZando();
 
@@ -335,7 +337,7 @@ export const ProductDetailPage: React.FC = () => {
     : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'];
 
   const merchantLink = product.merchant_url || product.external_url;
-  const productShareUrl = `https://zando-africa.vercel.app/produit/${encodeURIComponent(product.id)}`;
+  const productShareUrl = `https://zando-africa.vercel.app${shortProductPath(product.id)}`;
   const currencyOptions = Array.from(new Set(['FCFA', 'CDF', 'EUR', 'USD', selectedCurrency]));
 
   const normalizedOptions: string[] = Array.isArray(product.options)
@@ -782,9 +784,11 @@ export const ProductDetailPage: React.FC = () => {
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Description du produit
               </h3>
-              <p className="whitespace-pre-line break-words [overflow-wrap:anywhere] text-xs leading-relaxed text-foreground/90 sm:text-sm">
-                {product.description || 'Aucune description détaillée fournie.'}
-              </p>
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-border/80 bg-muted/20 px-3 py-2.5 overscroll-contain sm:max-h-48">
+                <p className="whitespace-pre-line break-words [overflow-wrap:anywhere] text-xs leading-relaxed text-foreground/90 sm:text-sm">
+                  {product.description || 'Aucune description détaillée fournie.'}
+                </p>
+              </div>
             </div>
 
             {/* 1. Seller Card with Seller Name (Requirement 3: Step 1) */}
@@ -823,7 +827,7 @@ export const ProductDetailPage: React.FC = () => {
                   <span className="uppercase tracking-wide">Aperçu gratuit et achat externe</span>
                 </div>
                 <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  Consultez gratuitement les 10 premières pages du livre. Le livre complet est téléchargeable après paiement. L’achat s’effectue exclusivement sur le site marchand du vendeur, en cliquant sur le bouton orange « Acheter vers le site marchand ».
+                  Consultez gratuitement les 20 premières pages du livre. Le livre complet est téléchargeable après paiement. L’achat s’effectue exclusivement sur le site marchand du vendeur, en cliquant sur le bouton orange « Acheter vers le site marchand ».
                 </p>
               </div>
             ) : (
@@ -915,7 +919,7 @@ export const ProductDetailPage: React.FC = () => {
             {similarProducts.map(item => (
               <div
                 key={item.id}
-                onClick={() => navigate(`/produit/${item.id}`)}
+                onClick={() => navigate(shortProductPath(item.id))}
                 className="bg-card rounded-2xl border p-3 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-shadow group"
               >
                 <div className="aspect-square rounded-xl overflow-hidden bg-muted">
@@ -946,7 +950,7 @@ export const ProductDetailPage: React.FC = () => {
               <span>Aperçu du livre</span>
             </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(10, previewTotalPages)} première${Math.min(10, previewTotalPages) > 1 ? 's' : ''} page${Math.min(10, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les dix premières pages du livre sont consultables gratuitement.'}
+                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(MAX_PREVIEW_PAGES, previewTotalPages)} première${Math.min(MAX_PREVIEW_PAGES, previewTotalPages) > 1 ? 's' : ''} page${Math.min(MAX_PREVIEW_PAGES, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les vingt premières pages du livre sont consultables gratuitement.'}
                     </DialogDescription>
           </DialogHeader>
           {previewBlobUrl && <PdfPreviewReader blobUrl={previewBlobUrl} maxPages={MAX_PREVIEW_PAGES} />}

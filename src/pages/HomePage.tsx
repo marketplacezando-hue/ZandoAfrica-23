@@ -9,6 +9,7 @@ import { HeroBanner } from '@/components/public/HeroBanner';
 import { VipPubBanner } from '@/components/public/VipPubBanner';
 import { CategoryFilterBar } from '@/components/public/CategoryFilterBar';
 import { ProductCard } from '@/components/public/ProductCard';
+import { shortProductPath } from '@/lib/productLinks';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -211,7 +212,7 @@ export const HomePage: React.FC = () => {
           </div>
           <div ref={popularScrollRef} onMouseEnter={() => setIsPopularPaused(true)} onMouseLeave={() => setIsPopularPaused(false)} onTouchStart={() => setIsPopularPaused(true)} onTouchEnd={() => setIsPopularPaused(false)} className="flex items-stretch gap-4 overflow-x-auto pb-2 pt-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {popularProducts.map(product => (
-              <div key={product.id} className="w-[260px] shrink-0 sm:w-[280px]"><ProductCard product={product} variant="popular" onProductClick={() => navigate(`/produit/${product.id}`)} /></div>
+              <div key={product.id} className="w-[260px] shrink-0 sm:w-[280px]"><ProductCard product={product} variant="popular" onProductClick={() => navigate(shortProductPath(product.id))} /></div>
             ))}
           </div>
         </section>
@@ -240,7 +241,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {products.map(product => <ProductCard key={product.id} product={product} variant="latest" onProductClick={() => navigate(`/produit/${product.id}`)} />)}
+            {products.map(product => <ProductCard key={product.id} product={product} variant="latest" onProductClick={() => navigate(shortProductPath(product.id))} />)}
           </div>
         ) : (
           <div className="space-y-4 rounded-2xl border border-dashed border-border bg-muted/30 p-10 text-center">

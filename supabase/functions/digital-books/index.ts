@@ -389,7 +389,7 @@ async function upload(request: Request, origin: string | null): Promise<Response
     // Serialize a NEW document, never the original with pages merely hidden.
     // Page annotations (including destinations pointing at excluded pages),
     // actions and auxiliary metadata are not imported into the public preview.
-    const indices = Array.from({ length: Math.min(10, pageCount) }, (_, index) => index);
+    const indices = Array.from({ length: Math.min(20, pageCount) }, (_, index) => index);
     for (const index of indices) {
       const page = source.getPage(index);
       for (const name of ['Annots', 'AA', 'Metadata', 'PieceInfo', 'Thumb', 'B', 'PresSteps', 'SeparationInfo']) {

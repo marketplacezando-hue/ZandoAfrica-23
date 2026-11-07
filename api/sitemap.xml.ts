@@ -1,3 +1,5 @@
+import { encodeProductRouteId } from './product-route-id';
+
 type SitemapProduct = {
   id?: string;
   updated_at?: string | null;
@@ -46,7 +48,7 @@ function renderSitemap(products: SitemapProduct[]): string {
     renderUrl(`${SITE_URL}/a-propos`, null, 'monthly', '0.6'),
     ...products.flatMap(product => {
       if (!product.id || !/^[0-9a-f-]{12,}$/i.test(product.id)) return [];
-      return [renderUrl(`${SITE_URL}/produit/${encodeURIComponent(product.id)}`, validIsoDate(product.updated_at || product.published_at), 'daily', '0.8')];
+      return [renderUrl(`${SITE_URL}/p/${encodeProductRouteId(product.id)}`, validIsoDate(product.updated_at || product.published_at), 'daily', '0.8')];
     })
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`;

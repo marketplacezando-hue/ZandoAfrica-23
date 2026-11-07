@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { shortProductPath } from '@/lib/productLinks';
 import { zandoApi } from '@/services/zandoApi';
 import type { ProductReview } from '@/types/zando';
 import {
@@ -219,7 +220,7 @@ export const AdminReviews: React.FC = () => {
 
                 <div className="flex items-center gap-2 shrink-0">
                   <a
-                    href={`/produit/${rev.product_id}`}
+                    href={shortProductPath(rev.product_id)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
