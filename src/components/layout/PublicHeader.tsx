@@ -132,7 +132,7 @@ export const PublicHeader: React.FC = () => {
             <img
               src={BRAND_ASSETS.logoUrl}
               alt={BRAND_ASSETS.brandName}
-              className="h-10 w-auto object-contain sm:h-12"
+              className="h-10 w-[130px] object-contain sm:h-[50px] sm:w-[180px]"
             />
           </Link>
 
@@ -179,7 +179,7 @@ export const PublicHeader: React.FC = () => {
               to="/passer-pub"
               className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border-2 border-blue-600 bg-blue-600/10 hover:bg-blue-600/20 text-blue-900 dark:text-blue-200 text-xs sm:text-sm font-bold transition-all shadow-xs active:scale-95"
             >
-              <Megaphone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Megaphone className="h-[18px] w-[18px] text-blue-600 dark:text-blue-400" />
               <span>PUB VIP</span>
             </Link>
 
@@ -200,7 +200,7 @@ export const PublicHeader: React.FC = () => {
                   aria-label="Ouvrir le menu"
                   className="flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-emerald-700 bg-white px-3 py-2 text-xs font-extrabold text-emerald-800 shadow-sm transition-all hover:bg-emerald-50 active:scale-95 sm:px-4 sm:text-sm"
                 >
-                  <Menu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <Menu className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
                   <span className="hidden sm:inline">Menu</span>
                 </button>
               </SheetTrigger>
@@ -217,7 +217,7 @@ export const PublicHeader: React.FC = () => {
                         aria-label="Zando Africa — Retour à l'accueil"
                         className="inline-flex min-w-0"
                       >
-                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-9 max-w-[190px] object-contain object-left" />
+                        <img src={BRAND_ASSETS.logoUrl} alt="Zando Africa" className="h-10 w-[130px] object-contain object-left sm:h-[40px] sm:w-[130px]" />
                       </Link>
                       <button
                         type="button"

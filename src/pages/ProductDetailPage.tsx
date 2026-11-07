@@ -139,12 +139,12 @@ const PdfPreviewReader: React.FC<{ blobUrl: string; maxPages?: number }> = ({ bl
         {rendering && <span className="absolute rounded-full bg-card/90 px-3 py-2 text-xs font-semibold text-muted-foreground shadow">Chargement de la page...</span>}
       </div>
       <div className="flex items-center justify-between gap-3">
-        <Button type="button" variant="outline" size="sm" onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} aria-label="Page précédente">
-          <ChevronLeft className="h-4 w-4" />
+        <Button type="button" variant="outline" size="sm" className="min-h-9 min-w-9" onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} aria-label="Page précédente">
+          <ChevronLeft className="h-[18px] w-[18px]" />
         </Button>
         <span className="text-xs font-semibold text-muted-foreground">Page {pageNumber} / {pageCount || '…'} · Glissez pour naviguer</span>
-        <Button type="button" variant="outline" size="sm" onClick={() => goToPage(pageNumber + 1)} disabled={!pageCount || pageNumber >= pageCount} aria-label="Page suivante">
-          <ChevronRight className="h-4 w-4" />
+        <Button type="button" variant="outline" size="sm" className="min-h-9 min-w-9" onClick={() => goToPage(pageNumber + 1)} disabled={!pageCount || pageNumber >= pageCount} aria-label="Page suivante">
+          <ChevronRight className="h-[18px] w-[18px]" />
         </Button>
       </div>
     </div>
