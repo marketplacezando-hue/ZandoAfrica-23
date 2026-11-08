@@ -69,7 +69,7 @@ function publicProductImage(product: ProductSocialData | null): string {
   return candidate && /^https:\/\//i.test(candidate) ? candidate : BRAND_LOGO;
 }
 
-function renderSocialHtml(product: ProductSocialData | null, siteUrl: string): string {
+function renderSocialHtml(product: ProductSocialData | null, productId: string, siteUrl: string): string {
   const isProduct = Boolean(product?.title);
   const title = isProduct ? `${product?.title} | Zando Africa` : 'Zando Africa — Marketplace panafricaine';
   const description = isProduct
@@ -151,5 +151,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600').send(renderSocialHtml(product, siteUrl));
+  res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600').send(renderSocialHtml(product, productId, siteUrl));
 }
