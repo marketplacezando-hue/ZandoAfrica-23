@@ -1,5 +1,5 @@
 function decodeBase64Url(value: string): Uint8Array {
-  const normalized = value.replaceAll('-', '+').replaceAll('_', '/') + '='.repeat((4 - value.length % 4) % 4);
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4);
   const binary = atob(normalized);
   return Uint8Array.from(binary, char => char.charCodeAt(0));
 }
@@ -7,7 +7,7 @@ function decodeBase64Url(value: string): Uint8Array {
 function encodeBase64Url(bytes: Uint8Array): string {
   let binary = '';
   bytes.forEach(byte => { binary += String.fromCharCode(byte); });
-  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
 export function decodeProductRouteId(routeId: string): string {
@@ -24,9 +24,11 @@ export function decodeProductRouteId(routeId: string): string {
 
 export function encodeProductRouteId(productId: string): string {
   try {
-    const hex = productId.replaceAll('-', '');
+    const hex = productId.replace(/-/g, '');
     if (!/^[0-9a-f]{32}$/i.test(hex)) return productId;
-    const bytes = Uint8Array.from(hex.match(/.{2}/g)!, pair => Number.parseInt(pair, 16));
+    const pairs = hex.match(/.{2}/g);
+    if (!pairs) return productId;
+    const bytes = Uint8Array.from(pairs, pair => Number.parseInt(pair, 16));
     return encodeBase64Url(bytes);
   } catch {
     return productId;
