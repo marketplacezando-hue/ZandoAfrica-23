@@ -15,7 +15,8 @@ type VercelResponse = {
   send: (body: Uint8Array) => void;
 };
 
-declare const process: { env: Record<string, string | undefined> };
+type RuntimeGlobal = typeof globalThis & { process?: { env?: Record<string, string | undefined> } };
+const ENV = (globalThis as RuntimeGlobal).process?.env ?? {};
 
 const BRAND_LOGO = 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvyf87pc/app-f5tomiygsu81/20261017/1000500253.png';
 
@@ -27,8 +28,8 @@ function getProductId(req: VercelRequest): string | null {
 }
 
 async function getProductImageUrl(productId: string): Promise<string> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = ENV.VITE_SUPABASE_URL || ENV.SUPABASE_URL;
+  const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY || ENV.VITE_SUPABASE_PUBLISHABLE_KEY || ENV.SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) return BRAND_LOGO;
 
   try {

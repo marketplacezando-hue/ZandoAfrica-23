@@ -12,7 +12,8 @@ type VercelResponse = {
   send: (body: string) => void;
 };
 
-declare const process: { env: Record<string, string | undefined> };
+type RuntimeGlobal = typeof globalThis & { process?: { env?: Record<string, string | undefined> } };
+const ENV = (globalThis as RuntimeGlobal).process?.env ?? {};
 
 const SITE_URL = 'https://zando-africa.vercel.app';
 
@@ -56,8 +57,8 @@ function renderSitemap(products: SitemapProduct[]): string {
 
 export default async function handler(_req: unknown, res: VercelResponse) {
   let products: SitemapProduct[] = [];
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = ENV.VITE_SUPABASE_URL;
+  const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseKey) {
     try {

@@ -21,7 +21,8 @@ type VercelResponse = {
   send: (body: string) => void;
 };
 
-declare const process: { env: Record<string, string | undefined> };
+type RuntimeGlobal = typeof globalThis & { process?: { env?: Record<string, string | undefined> } };
+const ENV = (globalThis as RuntimeGlobal).process?.env ?? {};
 
 const BRAND_LOGO = 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvyf87pc/app-f5tomiygsu81/20261017/1000500253.png';
 const FALLBACK_SITE_URL = 'https://zando-africa.vercel.app';
@@ -36,7 +37,7 @@ function escapeHtml(value: unknown): string {
 }
 
 function getSiteUrl(): string {
-  const configured = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  const configured = ENV.VERCEL_PROJECT_PRODUCTION_URL || ENV.VERCEL_URL;
   return configured ? `https://${configured.replace(/^https?:\/\//, '')}` : FALLBACK_SITE_URL;
 }
 
@@ -97,8 +98,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = ENV.VITE_SUPABASE_URL || ENV.SUPABASE_URL;
+  const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY || ENV.VITE_SUPABASE_PUBLISHABLE_KEY || ENV.SUPABASE_ANON_KEY;
   let product: ProductSocialData | null = null;
   if (supabaseUrl && supabaseKey) {
     try {
