@@ -14,7 +14,7 @@
           "value": ".*(facebookexternalhit|FacebookExternalHit|facebookcatalog|FacebookCatalog|facebookplatform|FacebookPlatform|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Pinterest|Slackbot|Discordbot|Googlebot|bingbot|Applebot).*"
         }
       ],
-      "destination": "/api/social-product/:id"
+      "destination": "/api/social-product?id=:id"
     },
     {
       "source": "/produit/:id",
@@ -25,7 +25,7 @@
           "value": ".*(facebookexternalhit|FacebookExternalHit|facebookcatalog|FacebookCatalog|facebookplatform|FacebookPlatform|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Pinterest|Slackbot|Discordbot|Googlebot|bingbot|Applebot).*"
         }
       ],
-      "destination": "/api/social-product/:id"
+      "destination": "/api/social-product?id=:id"
     },
     {
       "source": "/((?!api/).*)",
