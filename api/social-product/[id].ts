@@ -12,7 +12,8 @@ type ProductSocialData = {
 };
 
 type VercelRequest = {
-  query: Record<string, string | string[] | undefined>;
+  query?: Record<string, string | string[] | undefined>;
+  url?: string;
 };
 
 type VercelResponse = {
@@ -89,9 +90,10 @@ function renderSocialHtml(product: ProductSocialData | null, productId: string, 
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const rawId = req.query.id;
-  const routeId = Array.isArray(rawId) ? rawId[0] : rawId;
-  const productId = routeId ? decodeProductRouteId(routeId) : routeId;
+  const rawId = req.query?.id;
+  const queryId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const routeId = queryId || (req.url ? new URL(req.url, 'https://zando-africa.vercel.app').pathname.split('/').filter(Boolean).pop() : undefined);
+  const productId = routeId ? decodeProductRouteId(routeId) : null;
   const siteUrl = getSiteUrl();
   if (!productId || !/^[0-9a-f-]{12,}$/i.test(productId)) {
     res.status(400).send('Identifiant de produit invalide.');

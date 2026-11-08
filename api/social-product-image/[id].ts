@@ -6,7 +6,8 @@ type ProductRow = {
 };
 
 type VercelRequest = {
-  query: Record<string, string | string[] | undefined>;
+  query?: Record<string, string | string[] | undefined>;
+  url?: string;
 };
 
 type VercelResponse = {
@@ -21,9 +22,10 @@ const ENV = (globalThis as RuntimeGlobal).process?.env ?? {};
 const BRAND_LOGO = 'https://miaoda-conversation-file.s3cdn.medo.dev/user-f5tkhvyf87pc/app-f5tomiygsu81/20261017/1000500253.png';
 
 function getProductId(req: VercelRequest): string | null {
-  const rawId = req.query.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-  const productId = id ? decodeProductRouteId(id) : null;
+  const rawId = req.query?.id;
+  const queryId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const routeId = queryId || (req.url ? new URL(req.url, 'https://zando-africa.vercel.app').pathname.split('/').filter(Boolean).pop() : undefined);
+  const productId = routeId ? decodeProductRouteId(routeId) : null;
   return productId && /^[0-9a-f-]{12,}$/i.test(productId) ? productId : null;
 }
 
