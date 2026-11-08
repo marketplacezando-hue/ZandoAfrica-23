@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer';
 import { decodeProductRouteId } from '../product-route-id';
 
 type ProductRow = {
@@ -28,8 +27,8 @@ function getProductId(req: VercelRequest): string | null {
 }
 
 async function getProductImageUrl(productId: string): Promise<string> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) return BRAND_LOGO;
 
   try {
@@ -68,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .setHeader('Content-Length', String(bytes.byteLength))
       .setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800')
       .setHeader('X-Content-Type-Options', 'nosniff')
-      .send(Buffer.from(bytes));
+      .send(bytes);
   } catch (error) {
     console.error('Social image proxy failed', error);
     if (sourceUrl !== BRAND_LOGO) {
@@ -80,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .setHeader('Content-Type', fallback.headers.get('content-type') || 'image/png')
           .setHeader('Content-Length', String(bytes.byteLength))
           .setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800')
-          .send(Buffer.from(bytes));
+          .send(bytes);
         return;
       } catch {
         // Fall through to the explicit error below.
