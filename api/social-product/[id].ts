@@ -64,15 +64,20 @@ function getSiteUrl(): string {
   return configured ? `https://${configured.replace(/^https?:\/\//, '')}` : FALLBACK_SITE_URL;
 }
 
-function renderSocialHtml(product: ProductSocialData | null, productId: string, siteUrl: string): string {
+function publicProductImage(product: ProductSocialData | null): string {
+  const candidate = product?.photos?.[0]?.trim();
+  return candidate && /^https:\/\//i.test(candidate) ? candidate : BRAND_LOGO;
+}
+
+function renderSocialHtml(product: ProductSocialData | null, siteUrl: string): string {
   const isProduct = Boolean(product?.title);
   const title = isProduct ? `${product?.title} | Zando Africa` : 'Zando Africa — Marketplace panafricaine';
   const description = isProduct
     ? `${product?.description?.trim() || 'Découvrez cette annonce sur Zando Africa.'}${product?.seller_name ? ` — Vendeur : ${product.seller_name}.` : ''}`.slice(0, 240)
     : 'Achetez, vendez et évoluez avec Zando Africa, la marketplace panafricaine.';
-  const image = isProduct && product?.photos?.[0]
-    ? `${siteUrl}/api/social-product-image/${encodeURIComponent(productId)}`
-    : BRAND_LOGO;
+  // The stored product photo is already a public HTTPS asset. Using it directly
+  // avoids an extra serverless image proxy that social crawlers may reject.
+  const image = isProduct ? publicProductImage(product) : BRAND_LOGO;
   const pageUrl = `${siteUrl}/p/${encodeProductRouteId(productId)}`;
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
@@ -146,5 +151,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600').send(renderSocialHtml(product, productId, siteUrl));
+  res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600').send(renderSocialHtml(product, siteUrl));
 }
