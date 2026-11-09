@@ -14,6 +14,7 @@ import {
   Activity,
   FileText,
   Settings,
+  Palette,
   LogOut,
   ExternalLink,
   ShieldCheck,
@@ -52,6 +53,7 @@ export const AdminLayout: React.FC = () => {
     { label: 'Traçabilité des Clics', path: '/admin/tracabilite', icon: Activity },
     { label: 'Journal d\'Audit', path: '/admin/audit', icon: FileText },
     { label: 'Paramètres du Thème', path: '/admin/parametres', icon: Settings },
+    { label: 'Personnalisation', path: '/admin/personnalisation', icon: Palette },
   ];
 
   const isFreeMode = settings.site_mode?.mode === 'free';

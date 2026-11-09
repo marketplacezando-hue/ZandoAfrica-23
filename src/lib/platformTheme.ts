@@ -49,6 +49,10 @@ export function applyPlatformTheme(theme: Partial<PlatformSettings['theme']> | u
   const surface = hexToHsl(colors.surface_color, DEFAULT_THEME.surface_color);
   const border = hexToHsl(colors.border_color, DEFAULT_THEME.border_color);
   const sidebar = hexToHsl(colors.sidebar_color, DEFAULT_THEME.sidebar_color);
+  const background = hexToHsl(colors.background_color, '#F8FAFC');
+  const foreground = hexToHsl(colors.text_color, '#0F172A');
+  const fontFamily = colors.font_family === 'system' || !colors.font_family ? 'system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif' : `\"${colors.font_family}\", sans-serif`;
+  const density = colors.density === 'compact' ? '0.9' : colors.density === 'spacious' ? '1.1' : '1';
 
   root.style.setProperty('--primary', primary);
   root.style.setProperty('--ring', primary);
@@ -62,6 +66,13 @@ export function applyPlatformTheme(theme: Partial<PlatformSettings['theme']> | u
   root.style.setProperty('--border', border);
   root.style.setProperty('--input', border);
   root.style.setProperty('--sidebar-background', sidebar);
+  root.style.setProperty('--background', background);
+  root.style.setProperty('--foreground', foreground);
+  root.style.setProperty('--zando-font-family', fontFamily);
+  root.style.setProperty('--zando-button-scale', String(colors.button_scale ?? 1));
+  root.style.setProperty('--zando-button-text-scale', String(colors.button_text_scale ?? 1));
+  root.style.setProperty('--zando-density', density);
+  root.style.setProperty('--zando-card-radius', colors.card_style === 'rounded-none' ? '0' : colors.card_style === 'rounded-lg' ? '0.5rem' : colors.card_style === 'rounded-2xl' ? '1rem' : '0.75rem');
   root.style.setProperty('--zando-card-color', colors.card_color);
   root.style.setProperty('--zando-section-color', colors.surface_color);
   root.style.setProperty('--zando-border-color', colors.border_color);

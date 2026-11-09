@@ -81,7 +81,13 @@ export const zandoApi = {
       card_style: 'rounded-xl',
       card_color: '#FFFFFF',
       surface_color: '#F3F6F8',
-      border_color: '#E2E8F0'
+      border_color: '#E2E8F0',
+      background_color: '#F8FAFC',
+      text_color: '#0F172A',
+      font_family: 'system',
+      button_scale: 1,
+      button_text_scale: 1,
+      density: 'comfortable'
     };
 
     return {

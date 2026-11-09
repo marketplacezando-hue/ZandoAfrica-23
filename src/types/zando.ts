@@ -177,6 +177,12 @@ export interface PlatformSettings {
     card_color: string;
     surface_color: string;
     border_color: string;
+    background_color?: string;
+    text_color?: string;
+    font_family?: string;
+    button_scale?: number;
+    button_text_scale?: number;
+    density?: 'compact' | 'comfortable' | 'spacious';
   };
   pricing_durations: Array<{
     days: number;

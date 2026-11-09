@@ -10,6 +10,11 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --radius: 0.75rem;
+    --zando-font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif;
+    --zando-button-scale: 1;
+    --zando-button-text-scale: 1;
+    --zando-density: 1;
+    --zando-card-radius: 0.75rem;
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -87,7 +92,16 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--zando-font-family);
   }
+
+  .zando-theme-button {
+    min-height: calc(2.25rem * var(--zando-button-scale));
+    padding-inline: calc(1rem * var(--zando-button-scale));
+    font-size: calc(0.875rem * var(--zando-button-text-scale));
+  }
+
+  .zando-theme-card { border-radius: var(--zando-card-radius); }
 
   .no-scrollbar {
     scrollbar-width: none;

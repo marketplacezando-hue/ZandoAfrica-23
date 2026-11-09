@@ -33,6 +33,7 @@ const AdminTraffic = lazyNamed(() => import('@/pages/admin/AdminTraffic'), 'Admi
 const AdminTraceability = lazyNamed(() => import('@/pages/admin/AdminTraceability'), 'AdminTraceability');
 const AdminAuditLogs = lazyNamed(() => import('@/pages/admin/AdminAuditLogs'), 'AdminAuditLogs');
 const AdminSettings = lazyNamed(() => import('@/pages/admin/AdminSettings'), 'AdminSettings');
+const AdminPersonalization = lazyNamed(() => import('@/pages/admin/AdminPersonalization'), 'AdminPersonalization');
 
 const PageLoading = () => (
   <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-muted-foreground" role="status">
@@ -72,6 +73,7 @@ const App: React.FC = () => (
                 <Route path="tracabilite" element={<AdminTraceability />} />
                 <Route path="audit" element={<AdminAuditLogs />} />
                 <Route path="parametres" element={<AdminSettings />} />
+                <Route path="personnalisation" element={<AdminPersonalization />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
