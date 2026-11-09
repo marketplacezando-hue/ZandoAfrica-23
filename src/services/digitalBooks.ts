@@ -124,7 +124,7 @@ async function digitalBooksRequest(action: string, body: Record<string, unknown>
         Authorization: `Bearer ${accessToken || publishableKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ ...body, action })
     });
   } catch {
     throw new Error('Impossible de joindre le service de livres numériques. Réessayez ultérieurement.');
