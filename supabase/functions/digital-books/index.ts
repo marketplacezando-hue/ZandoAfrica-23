@@ -512,7 +512,9 @@ async function preview(request: Request, body: JsonRecord, origin: string | null
     const headers = responseHeaders(origin);
     headers.set('Content-Type', 'application/pdf');
     headers.set('Content-Disposition', 'inline; filename="apercu.pdf"');
-    headers.set('X-Digital-Page-Count', String(indices.length));
+    // The PDF body contains at most 20 preview pages, but the header must
+    // expose the original book total so the UI can describe older publications accurately.
+    headers.set('X-Digital-Page-Count', String(book.page_count));
     return new Response(preview, { status: 200, headers });
   } catch {
     throw new HttpError(422, 'preview_generation_failed', 'Impossible de générer un aperçu autonome de ce PDF.');
