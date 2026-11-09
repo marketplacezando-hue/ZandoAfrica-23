@@ -950,7 +950,7 @@ export const ProductDetailPage: React.FC = () => {
               <span>Aperçu du livre</span>
             </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${Math.min(MAX_PREVIEW_PAGES, previewTotalPages)} première${Math.min(MAX_PREVIEW_PAGES, previewTotalPages) > 1 ? 's' : ''} page${Math.min(MAX_PREVIEW_PAGES, previewTotalPages) > 1 ? 's' : ''} sont consultables gratuitement.` : 'Seules les vingt premières pages du livre sont consultables gratuitement.'}
+                      {previewTotalPages ? `Ce livre contient ${previewTotalPages} page${previewTotalPages > 1 ? 's' : ''}. Seules les ${MAX_PREVIEW_PAGES} premières pages sont consultables gratuitement.` : `Ce livre contient un nombre de pages en cours de chargement. Seules les ${MAX_PREVIEW_PAGES} premières pages sont consultables gratuitement.`}
                     </DialogDescription>
           </DialogHeader>
           {previewBlobUrl && <PdfPreviewReader blobUrl={previewBlobUrl} maxPages={MAX_PREVIEW_PAGES} />}
