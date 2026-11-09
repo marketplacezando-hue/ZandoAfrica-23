@@ -1,5 +1,3 @@
-import { encodeProductRouteId } from './product-route-id';
-
 type SitemapProduct = {
   id?: string;
   updated_at?: string | null;
@@ -14,16 +12,21 @@ type VercelResponse = {
 
 type RuntimeGlobal = typeof globalThis & { process?: { env?: Record<string, string | undefined> } };
 const ENV = (globalThis as RuntimeGlobal).process?.env ?? {};
-
 const SITE_URL = 'https://zando-africa.vercel.app';
 
+function encodeProductRouteId(productId: string): string {
+  const hex = productId.replace(/-/g, '');
+  if (!/^[0-9a-f]{32}$/i.test(hex)) return productId;
+  try {
+    const binary = (hex.match(/.{2}/g) || []).map(pair => String.fromCharCode(Number.parseInt(pair, 16))).join('');
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  } catch {
+    return productId;
+  }
+}
+
 function escapeXml(value: unknown): string {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
 function validIsoDate(value: string | null | undefined): string | null {
@@ -33,24 +36,16 @@ function validIsoDate(value: string | null | undefined): string | null {
 }
 
 function renderUrl(location: string, lastmod?: string | null, changefreq = 'weekly', priority = '0.7'): string {
-  return [
-    '  <url>',
-    `    <loc>${escapeXml(location)}</loc>`,
-    lastmod ? `    <lastmod>${escapeXml(lastmod)}</lastmod>` : '',
-    `    <changefreq>${changefreq}</changefreq>`,
-    `    <priority>${priority}</priority>`,
-    '  </url>'
-  ].filter(Boolean).join('\n');
+  return ['  <url>', `    <loc>${escapeXml(location)}</loc>`, lastmod ? `    <lastmod>${escapeXml(lastmod)}</lastmod>` : '', `    <changefreq>${changefreq}</changefreq>`, `    <priority>${priority}</priority>`, '  </url>'].filter(Boolean).join('\n');
 }
 
 function renderSitemap(products: SitemapProduct[]): string {
   const urls = [
     renderUrl(`${SITE_URL}/`, null, 'daily', '1.0'),
     renderUrl(`${SITE_URL}/a-propos`, null, 'monthly', '0.6'),
-    ...products.flatMap(product => {
-      if (!product.id || !/^[0-9a-f-]{12,}$/i.test(product.id)) return [];
-      return [renderUrl(`${SITE_URL}/p/${encodeProductRouteId(product.id)}`, validIsoDate(product.updated_at || product.published_at), 'daily', '0.8')];
-    })
+    ...products.flatMap(product => product.id && /^[0-9a-f-]{12,}$/i.test(product.id)
+      ? [renderUrl(`${SITE_URL}/p/${encodeProductRouteId(product.id)}`, validIsoDate(product.updated_at || product.published_at), 'daily', '0.8')]
+      : [])
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`;
 }
@@ -58,23 +53,15 @@ function renderSitemap(products: SitemapProduct[]): string {
 export default async function handler(_req: unknown, res: VercelResponse) {
   let products: SitemapProduct[] = [];
   const supabaseUrl = ENV.VITE_SUPABASE_URL;
-  const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY;
-
+  const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY || ENV.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (supabaseUrl && supabaseKey) {
     try {
       const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/products?select=id,updated_at,published_at&status=eq.published&order=updated_at.desc&limit=5000`;
-      const response = await fetch(endpoint, {
-        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
-      });
+      const response = await fetch(endpoint, { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } });
       if (response.ok) products = await response.json() as SitemapProduct[];
     } catch (error) {
       console.error('Sitemap product lookup failed', error);
     }
   }
-
-  res
-    .status(200)
-    .setHeader('Content-Type', 'application/xml; charset=utf-8')
-    .setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600')
-    .send(renderSitemap(products));
+  res.status(200).setHeader('Content-Type', 'application/xml; charset=utf-8').setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600').send(renderSitemap(products));
 }
