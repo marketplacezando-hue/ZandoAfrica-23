@@ -1,10 +1,8 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BRAND_ASSETS } from '@/constants/brand';
-import { useZando } from '@/contexts/ZandoContext';
 import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
-import { CountryFlag } from '@/components/common/CountryFlag';
-import { ShieldCheck, Phone, Mail, MapPin, Globe } from 'lucide-react';
+import { ShieldCheck, Mail, MapPin } from 'lucide-react';
 import { PublicHeader } from './PublicHeader';
 
 export interface PublicLayoutProps {
@@ -27,36 +25,10 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 };
 
 export const PublicFooter: React.FC = () => {
-  const { countries, setSelectedCountry } = useZando();
   const navigate = useNavigate();
 
   return (
     <footer className="bg-[#0a2f24] border-t border-emerald-900/60 mt-12 text-white">
-      {/* Countries Banner (Fond vert très sombre avec bordure émeraude) */}
-      <div className="bg-[#07231a] border-b border-emerald-800/40 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-emerald-200">
-            <span className="font-bold text-white flex items-center gap-1.5 shrink-0">
-              <Globe className="w-4 h-4 text-emerald-400" />
-              Pays disponibles en Afrique :
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {countries.map(c => (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => setSelectedCountry(c)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d3b2d] border border-emerald-700/60 hover:border-emerald-400 text-emerald-100 hover:text-white transition-all cursor-pointer text-xs shadow-xs"
-                >
-                  <CountryFlag countryId={c.id} />
-                  <span className="font-medium">{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-10">
           {/* Brand Info & Mission */}

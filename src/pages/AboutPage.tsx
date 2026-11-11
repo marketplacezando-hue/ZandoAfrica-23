@@ -4,11 +4,12 @@ import { BRAND_ASSETS } from '@/constants/brand';
 import { handleZandoLogoClick } from '@/lib/zandoLogoGesture';
 import { ShieldCheck, Globe, Zap, Users, MessageCircle, Phone } from 'lucide-react';
 import { useZando } from '@/contexts/ZandoContext';
+import { CountryFlag } from '@/components/common/CountryFlag';
 
 export const AboutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { settings } = useZando();
+  const { settings, countries, setSelectedCountry } = useZando();
 
   React.useEffect(() => {
     if (location.hash !== '#contact') return;
@@ -72,6 +73,31 @@ export const AboutPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      <section className="bg-card rounded-2xl border p-6 sm:p-8 space-y-4 shadow-xs" aria-labelledby="available-countries-title">
+        <div className="flex items-start gap-3">
+          <div className="p-3 rounded-xl bg-secondary/10 text-secondary w-fit shrink-0">
+            <Globe className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 id="available-countries-title" className="text-lg font-bold text-foreground">Pays disponibles</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Zando Africa accompagne les acheteurs et vendeurs dans plusieurs pays africains. Sélectionnez un pays pour consulter les annonces correspondantes.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {countries.map(country => (
+            <button
+              key={country.id}
+              type="button"
+              onClick={() => setSelectedCountry(country)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+            >
+              <CountryFlag countryId={country.id} />
+              <span>{country.name}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Conditions & Mentions */}
       <div className="bg-card rounded-2xl border p-6 sm:p-8 space-y-6">
