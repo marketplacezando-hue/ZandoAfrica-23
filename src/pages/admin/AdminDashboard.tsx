@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { zandoApi } from '@/services/zandoApi';
-import type { Product, BannerAd, SellerSubscription, Transaction, TrafficEvent } from '@/types/zando';
+import type { Product, TrafficEvent, AdminDashboardStats } from '@/types/zando';
 import {
   Package,
   Megaphone,
@@ -10,25 +10,21 @@ import {
   TrendingUp,
   Users,
   Eye,
-  Phone,
   MessageCircle,
   PlusCircle,
   KeyRound,
   Settings,
   ArrowUpRight,
-  ShieldCheck,
   CheckCircle2,
-  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CountryFlag } from '@/components/common/CountryFlag';
 
 export const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [banners, setBanners] = useState<BannerAd[]>([]);
-  const [subscriptions, setSubscriptions] = useState<SellerSubscription[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [trafficEvents, setTrafficEvents] = useState<TrafficEvent[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<AdminDashboardStats | null>(null);
+  const [dashboardError, setDashboardError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [revenuePeriod, setRevenuePeriod] = useState<'7d' | '30d' | 'year'>('30d');
@@ -37,21 +33,19 @@ export const AdminDashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [prods, bannes, subs, txs, events] = await Promise.all([
-          zandoApi.getProducts({ limit: 50 }),
-          zandoApi.getBannerAds('active'),
-          zandoApi.getSubscriptions(),
-          zandoApi.getTransactions(),
+        const [prods, stats, events] = await Promise.all([
+          zandoApi.getProducts({ status: 'published', limit: 5 }),
+          zandoApi.getAdminDashboardStats(),
           zandoApi.getTrafficEvents(100)
         ]);
 
         setProducts(prods);
-        setBanners(bannes);
-        setSubscriptions(subs);
-        setTransactions(txs);
+        setDashboardStats(stats);
         setTrafficEvents(events);
+        setDashboardError(false);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
+        setDashboardError(true);
       } finally {
         setLoading(false);
       }
@@ -60,45 +54,44 @@ export const AdminDashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Compute KPIs
-  const totalProductsCount = products.length;
-  const activeBannersCount = banners.length;
-  const activeSubscriptionsCount = subscriptions.length;
-  const totalRevenue = transactions
-    .filter(t => t.status === 'completed')
-    .reduce((sum, t) => sum + (t.amount || 0), 0) + 2458000; // Adding base consolidated revenue for realistic display matching Image 3
+  const totalProductsCount = dashboardStats?.publishedProducts ?? 0;
+  const activeBannersCount = dashboardStats?.activeBanners ?? 0;
+  const activeSubscriptionsCount = dashboardStats?.activeSubscriptions ?? 0;
+  const successfulPaymentsCount = dashboardStats?.successfulPayments ?? 0;
+  const totalRevenue = dashboardStats?.completedRevenue ?? 0;
+  const transactions = dashboardStats?.completedTransactions ?? [];
 
-  // Revenue chart mock points based on period
+  const periodDays = revenuePeriod === '7d' ? 7 : 30;
+  const periodStart = Date.now() - periodDays * 24 * 60 * 60 * 1000;
   const revenueData = revenuePeriod === '7d'
-    ? [
-        { label: 'Lun', amount: 120000 },
-        { label: 'Mar', amount: 185000 },
-        { label: 'Mer', amount: 140000 },
-        { label: 'Jeu', amount: 260000 },
-        { label: 'Ven', amount: 310000 },
-        { label: 'Sam', amount: 480000 },
-        { label: 'Dim', amount: 390000 }
-      ]
-    : [
-        { label: 'Sem 1', amount: 620000 },
-        { label: 'Sem 2', amount: 840000 },
-        { label: 'Sem 3', amount: 730000 },
-        { label: 'Sem 4', amount: 980000 }
-      ];
+    ? Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(Date.now() - (6 - index) * 24 * 60 * 60 * 1000);
+        const key = date.toISOString().slice(0, 10);
+        return { label: date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''), amount: transactions.filter(t => t.created_at.slice(0, 10) === key).reduce((sum, t) => sum + Number(t.amount || 0), 0) };
+      })
+    : Array.from({ length: 4 }, (_, index) => {
+        const start = periodStart + index * 7 * 24 * 60 * 60 * 1000;
+        const end = index === 3 ? Date.now() : start + 7 * 24 * 60 * 60 * 1000;
+        return { label: `Sem. ${index + 1}`, amount: transactions.filter(t => { const time = new Date(t.created_at).getTime(); return time >= start && time < end; }).reduce((sum, t) => sum + Number(t.amount || 0), 0) };
+      });
 
-  const maxRevenue = Math.max(...revenueData.map(d => d.amount));
+  const maxRevenue = Math.max(1, ...revenueData.map(d => d.amount));
 
-  // Country breakdown percentages
-  const countryDistribution = [
-    { name: 'Congo-Brazzaville', code: 'CG', flag: '🇨🇬', percent: 45, color: '#00A651' },
-    { name: 'RDC', code: 'CD', flag: '🇨🇩', percent: 28, color: '#2563EB' },
-    { name: "Côte d'Ivoire", code: 'CI', flag: '🇨🇮', percent: 15, color: '#FF8A00' },
-    { name: 'Sénégal & Cameroun', code: 'SN', flag: '🇸🇳', percent: 8, color: '#8B5CF6' },
-    { name: 'Autres pays', code: 'AF', flag: '🌍', percent: 4, color: '#64748B' }
-  ];
+  const countryDistribution = dashboardStats?.countryDistribution ?? [];
+  const eventLabel = (eventType: string) => ({
+    whatsapp_click: 'Clic Contact WhatsApp',
+    call_click: 'Appel téléphonique',
+    product_view: 'Consultation d’une annonce',
+    product_publish: 'Nouvelle annonce publiée'
+  }[eventType] || 'Interaction enregistrée');
 
   return (
     <div className="space-y-8">
+      {dashboardError && (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Certaines statistiques ne sont pas disponibles pour le moment. Les données affichées correspondent uniquement aux résultats confirmés par le serveur.
+        </div>
+      )}
       {/* Top Welcome Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -136,11 +129,11 @@ export const AdminDashboard: React.FC = () => {
               Produits publiés
             </span>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              {totalProductsCount > 0 ? (totalProductsCount + 1240).toLocaleString('fr-FR') : '1 248'}
+              {loading ? '…' : totalProductsCount.toLocaleString('fr-FR')}
             </div>
             <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
-              +14% cette semaine
+              Résultat réel en base de données
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
@@ -155,7 +148,7 @@ export const AdminDashboard: React.FC = () => {
               Publicités actives
             </span>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              {activeBannersCount > 0 ? activeBannersCount + 30 : 32}
+              {loading ? '…' : activeBannersCount.toLocaleString('fr-FR')}
             </div>
             <span className="text-[11px] text-blue-600 font-semibold flex items-center gap-1">
               <Eye className="w-3 h-3" />
@@ -174,7 +167,7 @@ export const AdminDashboard: React.FC = () => {
               Abonnements actifs
             </span>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              {activeSubscriptionsCount > 0 ? activeSubscriptionsCount + 16 : 18}
+              {loading ? '…' : activeSubscriptionsCount.toLocaleString('fr-FR')}
             </div>
             <span className="text-[11px] text-purple-600 font-semibold flex items-center gap-1">
               <Users className="w-3 h-3" />
@@ -193,11 +186,11 @@ export const AdminDashboard: React.FC = () => {
               Paiements réussis
             </span>
             <div className="text-xl sm:text-2xl font-extrabold text-emerald-600">
-              {new Intl.NumberFormat('fr-FR').format(totalRevenue)} FCFA
+              {loading ? '…' : successfulPaymentsCount.toLocaleString('fr-FR')}
             </div>
             <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              Transactions confirmées
+              {new Intl.NumberFormat('fr-FR').format(totalRevenue)} FCFA encaissés
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
@@ -271,14 +264,14 @@ export const AdminDashboard: React.FC = () => {
               Répartition par pays
             </h3>
             <p className="text-xs text-muted-foreground">
-              Volume des annonces actives et fréquentation
+              Produits publiés par pays
             </p>
           </div>
 
           {/* Donut / Stacked Progress Indicator */}
           <div className="space-y-3 py-2">
-            {countryDistribution.map(c => (
-              <div key={c.code} className="space-y-1">
+            {countryDistribution.length > 0 ? countryDistribution.map(c => (
+              <div key={c.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <span className="flex items-center gap-1.5">
                     <span>{c.flag}</span>
@@ -293,7 +286,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
               </div>
-            ))}
+            )) : <p className="py-8 text-center text-xs text-muted-foreground">Aucune annonce publiée avec un pays renseigné.</p>}
           </div>
 
           <div className="p-3 rounded-xl bg-muted/40 border text-[11px] text-muted-foreground flex items-center justify-between">
@@ -314,7 +307,7 @@ export const AdminDashboard: React.FC = () => {
               Derniers produits soumis
             </h3>
             <Link to="/admin/produits" className="text-xs font-bold text-primary hover:underline">
-              Tout voir ({products.length})
+              Tout voir ({totalProductsCount.toLocaleString('fr-FR')})
             </Link>
           </div>
 
@@ -351,47 +344,25 @@ export const AdminDashboard: React.FC = () => {
         {/* Right: Activité récente & Traçabilité (5 cols) */}
         <div className="lg:col-span-5 bg-card rounded-2xl border border-border p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b pb-3">
-            <h3 className="font-extrabold text-base text-foreground">
-              Interactions & Clics en direct
-            </h3>
+            <h3 className="font-extrabold text-base text-foreground">Interactions récentes</h3>
             <Link to="/admin/tracabilite" className="text-xs font-bold text-primary hover:underline">
               Traçabilité →
             </Link>
           </div>
 
           <div className="space-y-3">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                <MessageCircle className="w-4 h-4" />
+            {trafficEvents.slice(0, 3).map(event => (
+              <div key={event.id} className="p-3 rounded-xl bg-muted/40 border border-border flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-foreground">{eventLabel(event.event_type)}</div>
+                  <div className="text-[11px] text-muted-foreground">{new Date(event.created_at).toLocaleString('fr-FR')}</div>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Clic Contact WhatsApp</div>
-                <div className="text-[11px] text-muted-foreground">Acheteur mis en relation avec le vendeur</div>
-              </div>
-              <span className="text-[10px] font-bold text-emerald-700">En direct</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200/60 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
-                <Phone className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Appel téléphonique direct</div>
-                <div className="text-[11px] text-muted-foreground">Tentative de contact téléphonique</div>
-              </div>
-              <span className="text-[10px] font-bold text-blue-700">En direct</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
-                <PlusCircle className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Nouvelle annonce enregistrée</div>
-                <div className="text-[11px] text-muted-foreground">Formulaire 4 étapes validé</div>
-              </div>
-              <span className="text-[10px] font-bold text-amber-700">Récemment</span>
-            </div>
+            ))}
+            {!trafficEvents.length && <p className="py-8 text-center text-xs text-muted-foreground">Aucune interaction enregistrée.</p>}
           </div>
         </div>
       </div>

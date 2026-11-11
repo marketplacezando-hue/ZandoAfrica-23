@@ -154,6 +154,23 @@ export interface TrafficEvent {
   created_at: string;
 }
 
+export interface DashboardCountryDistribution {
+  name: string;
+  flag: string;
+  percent: number;
+  color: string;
+}
+
+export interface AdminDashboardStats {
+  publishedProducts: number;
+  activeBanners: number;
+  activeSubscriptions: number;
+  successfulPayments: number;
+  completedRevenue: number;
+  completedTransactions: Array<Pick<Transaction, 'amount' | 'currency' | 'created_at'>>;
+  countryDistribution: DashboardCountryDistribution[];
+}
+
 export interface AdminAuditLog {
   id: string;
   admin_email: string;

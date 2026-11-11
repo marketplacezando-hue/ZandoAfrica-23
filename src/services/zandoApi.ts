@@ -182,6 +182,59 @@ export const zandoApi = {
     return (data || []) as unknown as Product[];
   },
 
+  async getAdminDashboardStats(): Promise<import('@/types/zando').AdminDashboardStats> {
+    const now = new Date().toISOString();
+    const colors = ['#00A651', '#2563EB', '#FF8A00', '#8B5CF6', '#64748B', '#E11D48'];
+    const [productsCount, bannersCount, subscriptionsCount, transactionsResult, countryResult] = await Promise.all([
+      supabase.from('products').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+      supabase.from('banner_ads').select('id', { count: 'exact', head: true }).eq('status', 'active').lte('starts_at', now).gte('expires_at', now),
+      supabase.from('seller_subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active').lte('starts_at', now).gte('expires_at', now),
+      supabase.from('transactions').select('amount,currency,created_at').eq('status', 'completed').order('created_at', { ascending: false }).limit(5000),
+      supabase.from('products').select('country_id,countries(name,flag_emoji)').eq('status', 'published').limit(5000)
+    ]);
+
+    const failures = [productsCount.error, bannersCount.error, subscriptionsCount.error, transactionsResult.error, countryResult.error].filter(Boolean);
+    if (failures.length) {
+      console.error('Dashboard statistics query failed:', failures);
+      throw new Error('Les statistiques du tableau de bord ne sont pas disponibles.');
+    }
+
+    const completedTransactions = (transactionsResult.data || []) as Array<Pick<import('@/types/zando').Transaction, 'amount' | 'currency' | 'created_at'>>;
+    const completedRevenue = completedTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    const countryTotals = new Map<string, { name: string; flag: string; count: number }>();
+    for (const row of (countryResult.data || []) as Array<{ countries?: { name?: string; flag_emoji?: string } | Array<{ name?: string; flag_emoji?: string }> | null }>) {
+      const relation = Array.isArray(row.countries) ? row.countries[0] : row.countries;
+      const name = relation?.name || 'Pays non renseigné';
+      const current = countryTotals.get(name) || { name, flag: relation?.flag_emoji || '🌍', count: 0 };
+      current.count += 1;
+      countryTotals.set(name, current);
+    }
+    const countryTotal = Array.from(countryTotals.values()).reduce((sum, country) => sum + country.count, 0);
+    const countryDistribution = Array.from(countryTotals.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((country, index) => ({
+        name: country.name,
+        flag: country.flag,
+        percent: countryTotal ? Math.round((country.count / countryTotal) * 100) : 0,
+        color: colors[index % colors.length]
+      }));
+    const displayedPercent = countryDistribution.reduce((sum, country) => sum + country.percent, 0);
+    if (displayedPercent < 100 && countryDistribution.length) {
+      countryDistribution.push({ name: 'Autres pays', flag: '🌍', percent: 100 - displayedPercent, color: colors[colors.length - 1] });
+    }
+
+    return {
+      publishedProducts: productsCount.count || 0,
+      activeBanners: bannersCount.count || 0,
+      activeSubscriptions: subscriptionsCount.count || 0,
+      successfulPayments: completedTransactions.length,
+      completedRevenue,
+      completedTransactions,
+      countryDistribution
+    };
+  },
+
   /**
    * Présente 75% de produits locaux et 25% de produits de l'étranger (Exigence Utilisateur)
    */
