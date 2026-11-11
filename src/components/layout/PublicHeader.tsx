@@ -223,9 +223,9 @@ export const PublicHeader: React.FC = () => {
                         type="button"
                         onClick={() => setMobileMenuOpen(false)}
                         aria-label="Fermer le menu"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-emerald-600 text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-emerald-600 text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                     <SheetTitle className="sr-only">Menu de navigation Zando Africa</SheetTitle>
@@ -237,18 +237,18 @@ export const PublicHeader: React.FC = () => {
                         {!manualCountrySelection && visitorCountry ? (
                           <span className="text-2xl leading-none" aria-label={`Drapeau de ${displayCountryName}`}>{countryCodeToFlag(displayCountryCode || '')}</span>
                         ) : displayCountryCode ? (
-                          <CountryFlag countryId={displayCountryCode} className="h-6 w-9 shrink-0 rounded-sm" />
+                          <CountryFlag countryId={displayCountryCode} className="h-5 w-8 shrink-0 rounded-sm" />
                         ) : (
-                          <Globe className="h-6 w-6 shrink-0 text-slate-500" aria-hidden="true" />
+                          <Globe className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
                         )}
                         <div className="min-w-0">
-                          <p className="text-xs text-slate-500">Pays actuel</p>
-                          <p className="truncate text-sm font-bold text-slate-900">{displayCountryName}</p>
+                          <p className="text-[11px] text-slate-500">Pays actuel</p>
+                          <p className="truncate text-xs font-bold text-slate-900">{displayCountryName}</p>
                         </div>
                       </div>
                       <DropdownMenu open={countryPickerOpen} onOpenChange={setCountryPickerOpen}>
                         <DropdownMenuTrigger asChild>
-                          <button type="button" className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                          <button type="button" className="shrink-0 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
                             Changer
                           </button>
                         </DropdownMenuTrigger>
@@ -272,59 +272,59 @@ export const PublicHeader: React.FC = () => {
                     </div>
 
                     <form onSubmit={handleMenuSearch} className="relative">
-                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
                       <Input
                         type="search"
                         aria-label="Rechercher un produit"
                         placeholder="Rechercher un produit…"
                         value={menuSearchQuery}
                         onChange={event => setMenuSearchQuery(event.target.value)}
-                        className="h-12 rounded-2xl border border-slate-200 bg-white pl-11 text-sm text-slate-900 shadow-sm placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-emerald-600"
+                        className="h-10 rounded-xl border border-slate-200 bg-white pl-10 text-xs text-slate-900 shadow-sm placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-emerald-600"
                       />
                     </form>
                   </div>
 
-                  <nav aria-label="Navigation principale" className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-5">
+                  <nav aria-label="Navigation principale" className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-4">
                     <Link
                       to="/"
                       onClick={() => setMobileMenuOpen(false)}
                       aria-current={location.pathname === '/' && !location.hash ? 'page' : undefined}
-                      className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition-colors ${location.pathname === '/' && !location.hash ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
+                      className={`flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === '/' && !location.hash ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
                     >
-                      <Home className="h-6 w-6 shrink-0" />
+                      <Home className="h-5 w-5 shrink-0" />
                       <span>Accueil</span>
                     </Link>
                     <Link
                       to="/#dernieres-annonces"
                       onClick={() => setMobileMenuOpen(false)}
                       aria-current={location.pathname === '/' && location.hash === '#dernieres-annonces' ? 'location' : undefined}
-                      className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition-colors ${location.pathname === '/' && location.hash === '#dernieres-annonces' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
+                      className={`flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === '/' && location.hash === '#dernieres-annonces' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-900 hover:bg-slate-50'}`}
                     >
-                      <ShoppingBag className="h-6 w-6 shrink-0" />
+                      <ShoppingBag className="h-5 w-5 shrink-0" />
                       <span>Produits</span>
                     </Link>
-                    <Link to="/passer-pub" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
-                      <Megaphone className="h-6 w-6 shrink-0" />
+                    <Link to="/passer-pub" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <Megaphone className="h-5 w-5 shrink-0" />
                       <span>Passez une pub</span>
                     </Link>
-                    <Link to="/publier" onClick={() => setMobileMenuOpen(false)} className="flex min-h-16 items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-red-700">
-                      <CirclePlus className="h-6 w-6 shrink-0" />
+                    <Link to="/publier" onClick={() => setMobileMenuOpen(false)} className="flex min-h-12 items-center gap-2.5 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700">
+                      <CirclePlus className="h-5 w-5 shrink-0" />
                       <span>Vendre un article</span>
                     </Link>
-                    <Link to="/abonnement" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
-                      <CreditCard className="h-6 w-6 shrink-0" />
+                    <Link to="/abonnement" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <CreditCard className="h-5 w-5 shrink-0" />
                       <span>Abonnement</span>
                     </Link>
-                    <Link to="/a-propos" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50">
-                      <Info className="h-6 w-6 shrink-0" />
+                    <Link to="/a-propos" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50">
+                      <Info className="h-5 w-5 shrink-0" />
                       <span>À propos</span>
                     </Link>
-                    <Link to="/a-propos#contact" onClick={() => setMobileMenuOpen(false)} className="flex min-h-14 items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-base font-semibold text-orange-600 transition-colors hover:bg-orange-100">
-                      <MessageSquarePlus className="h-6 w-6 shrink-0" />
+                    <Link to="/a-propos#contact" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-2.5 rounded-xl bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-100">
+                      <MessageSquarePlus className="h-5 w-5 shrink-0" />
                       <span>Donner votre avis</span>
                     </Link>
-                    <button type="button" onClick={() => setCountryPickerOpen(true)} className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800">
-                      <Globe className="h-6 w-6 shrink-0" />
+                    <button type="button" onClick={() => setCountryPickerOpen(true)} className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800">
+                      <Globe className="h-5 w-5 shrink-0" />
                       <span>Choisir le pays</span>
                     </button>
 
