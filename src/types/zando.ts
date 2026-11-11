@@ -151,6 +151,7 @@ export interface TrafficEvent {
   country_code?: string | null;
   city?: string | null;
   device_type?: string | null;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
 }
 

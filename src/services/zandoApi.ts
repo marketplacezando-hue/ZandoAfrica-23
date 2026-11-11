@@ -557,10 +557,12 @@ export const zandoApi = {
     country_code?: string;
     city?: string;
     device_type?: string;
+    metadata?: Record<string, unknown>;
   }): Promise<void> {
     await supabase.from('traffic_events').insert([
       {
         ...event,
+        metadata: { ...(event.metadata || {}), visitor_id: getVisitorId() },
         device_type: window.innerWidth < 768 ? 'mobile' : 'desktop'
       }
     ]);
