@@ -34,6 +34,7 @@ export const AdminProducts: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState<number | ''>('');
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
   const [editPhotoPreview, setEditPhotoPreview] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
@@ -86,6 +87,7 @@ export const AdminProducts: React.FC = () => {
     setEditingProduct(product);
     setEditTitle(product.title);
     setEditDescription(product.description || '');
+    setEditPrice(product.price);
     setEditPhotoFile(null);
     setEditPhotoPreview(product.photos?.[0] || '');
   };
@@ -109,12 +111,17 @@ export const AdminProducts: React.FC = () => {
     if (!editingProduct) return;
     const title = editTitle.trim();
     const description = editDescription.trim();
+    const price = typeof editPrice === 'number' ? editPrice : Number(editPrice);
     if (title.length < 2 || title.length > 160) {
       toast.error('Le titre doit contenir entre 2 et 160 caractères.');
       return;
     }
     if (description.length > 10000) {
       toast.error('La description ne peut pas dépasser 10 000 caractères.');
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0 || price > 1_000_000_000) {
+      toast.error('Le prix doit être un nombre compris entre 0 et 1 000 000 000.');
       return;
     }
 
@@ -133,6 +140,7 @@ export const AdminProducts: React.FC = () => {
       const changedFields = [
         ...(title !== editingProduct.title ? ['title'] : []),
         ...(description !== (editingProduct.description || '') ? ['description'] : []),
+        ...(price !== Number(editingProduct.price) ? ['price'] : []),
         ...(editPhotoFile ? ['main_photo'] : [])
       ];
       if (!changedFields.length) {
@@ -140,7 +148,7 @@ export const AdminProducts: React.FC = () => {
         return;
       }
 
-      const updates: Partial<Product> = { title, description: description || null };
+      const updates: Partial<Product> = { title, description: description || null, price };
       if (editPhotoFile) updates.photos = photos;
       const saved = await zandoApi.updateProduct(editingProduct.id, updates);
       if (!saved) {
@@ -151,6 +159,7 @@ export const AdminProducts: React.FC = () => {
       await zandoApi.logAdminAction(adminUserEmail || '', 'update_product', 'product', editingProduct.id, { changed_fields: changedFields });
       toast.success('Annonce mise à jour avec succès.');
       setEditingProduct(null);
+      setEditPrice('');
       setEditPhotoFile(null);
       setEditPhotoPreview('');
       await loadProducts();
@@ -471,7 +480,7 @@ export const AdminProducts: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Modifier l’annonce</DialogTitle>
             <DialogDescription>
-              Corrige le titre, la description ou la photo principale. L’identifiant, le vendeur, le paiement, les avis et les dates d’origine sont conservés.
+              Corrige le titre, le prix, la description ou la photo principale. L’identifiant, le vendeur, le paiement, les avis et les dates d’origine sont conservés.
             </DialogDescription>
           </DialogHeader>
 
@@ -480,6 +489,12 @@ export const AdminProducts: React.FC = () => {
               <label htmlFor="admin-product-title" className="text-sm font-semibold">Titre de l’annonce</label>
               <Input id="admin-product-title" value={editTitle} onChange={event => setEditTitle(event.target.value)} maxLength={160} className="h-11" />
               <p className="text-xs text-muted-foreground">Entre 2 et 160 caractères.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="admin-product-price" className="text-sm font-semibold">Prix ({editingProduct?.currency || 'devise du produit'})</label>
+              <Input id="admin-product-price" type="number" inputMode="decimal" min="0" max="1000000000" step="1" value={editPrice} onChange={event => setEditPrice(event.target.value === '' ? '' : Number(event.target.value))} className="h-11" />
+              <p className="text-xs text-muted-foreground">Saisissez un montant positif ou nul. La devise existante du produit est conservée.</p>
             </div>
 
             <div className="space-y-1.5">
